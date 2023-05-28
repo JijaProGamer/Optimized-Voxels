@@ -1,0 +1,33 @@
+#include "FastNoiseLite.hlsl"
+#pragma kernel D2Noise;
+#pragma kernel D3Noise;
+
+StructuredBuffer<int3> Chunks;
+RWStructuredBuffer<float> Result;
+
+int terrain_scale;
+int terrain_amplitude;
+
+uint indexFromId2D(uint group, uint3 id){
+    return group * 64 + (id.x + 8 * id.y);
+}
+
+uint indexFromId3D(uint group, uint3 id){
+    return group * 512 + (id.x + 8 * (id.y + 8 * id.z));
+}
+
+[numthreads(8,8,1)]
+void D2Noise (uint3 group_id: SV_GroupID, uint3 individual_id: SV_GroupThreadID )
+{
+    uint index = indexFromId2D(group_id.x, individual_id);
+
+    Result[index] = index;
+}
+
+[numthreads(8,8,8)]
+void D3Noise (uint3 group_id: SV_GroupID, uint3 individual_id: SV_GroupThreadID )
+{
+    uint index = indexFromId3D(group_id.x, individual_id);
+
+    Result[index] = 2;
+}

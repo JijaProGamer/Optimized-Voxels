@@ -1,0 +1,20 @@
+#include "MarchingTable.hlsl"
+#pragma kernel March;
+
+struct Triangle {
+    float3 a, b, c;
+};
+
+StructuredBuffer<int2> Chunks;
+RWStructuredBuffer<Triangle> Result;
+
+[numthreads(8,8,8)]
+void March (uint3 id : SV_DispatchThreadID)
+{
+    Triangle tri;
+    tri.a = float3(0, 0, 0);
+    tri.b = float3(0, 0, 0);
+    tri.c = float3(0, 0, 0);
+
+    Result[id.x] = tri;
+}
