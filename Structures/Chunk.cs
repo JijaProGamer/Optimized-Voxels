@@ -4,6 +4,8 @@ using UnityEngine;
 
 public struct Chunk {
     public Vector3Int position;
+    public ChunkMesh mesh;
+
     public bool wasInit;
 
     int[] voxels;

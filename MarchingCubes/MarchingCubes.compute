@@ -6,6 +6,7 @@ struct Triangle {
 };
 
 StructuredBuffer<int2> Chunks;
+StructuredBuffer<float> Densities;
 RWStructuredBuffer<Triangle> Result;
 
 [numthreads(8,8,8)]

@@ -29,5 +29,5 @@ void D3Noise (uint3 group_id: SV_GroupID, uint3 individual_id: SV_GroupThreadID 
 {
     uint index = indexFromId3D(group_id.x, individual_id);
 
-    Result[index] = 2;
+    Result[index] = 0.75;
 }

@@ -10,23 +10,27 @@ public class Tester : MonoBehaviour
     ChunkManager chunks = new ChunkManager();
     TerrainSettings settings = new TerrainSettings();
 
+    bool finishedConstructingTerrain = false;
+    bool startedMarchingCubes = false;
+    bool finishedMarchingCubes = false;
+
     int mapSize = 500;
-    int mapHeight = 20;
-    int renderDistance = 4;
+    int mapHeight = 40;
+    int renderDistance = 16;
 
     void Start()
     {
+        int cpu_threads = SystemInfo.processorCount;
+
+
         settings.terrain_amplitude = 150;
         settings.terrain_scale = 100;
 
         chunks.terrainShader = terrainShader;
         chunks.marchingShader = marchingShader;
 
-        chunks.__init(mapSize, mapHeight);
+        chunks.__init(mapSize, mapHeight, cpu_threads);
         chunks.settings = settings;
-
-        Chunk e = new Chunk();
-        e.__init();
 
         List<Chunk> chunksToConstruct = new List<Chunk>();
 
@@ -50,6 +54,15 @@ public class Tester : MonoBehaviour
 
     void Update()
     {
+        if(!startedMarchingCubes && finishedConstructingTerrain){
+            startedMarchingCubes = true;
+            Debug.Log(true);
+        }
+
         chunks.Update();
+
+        if(chunks.finishedSavingChunks){
+            finishedConstructingTerrain = true;
+        }
     }
 }

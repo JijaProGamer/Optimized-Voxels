@@ -16,7 +16,10 @@ public class ChunkManager
     TerrainGenerator terrainGenerator = new TerrainGenerator();
     MarchingCubes marchingCubes = new MarchingCubes();
 
-    public void __init(int mapSize, int mapHeight)
+    public bool finishedSavingChunks = false;
+    public bool finishedMarchingCubes = false;
+
+    public void __init(int mapSize, int mapHeight, int cpu_threads)
     {
         middleSize = mapSize / 2;
         middleHeight = mapHeight / 2;
@@ -25,6 +28,8 @@ public class ChunkManager
         chunks = new Chunk[mapSize * mapHeight * mapSize];
 
         terrainGenerator.shader = terrainShader;
+        terrainGenerator.mapHeight = mapHeight;
+        terrainGenerator.cpu_threads = cpu_threads;
     }
 
     public Chunk GetChunk(Vector3Int position){
@@ -49,5 +54,9 @@ public class ChunkManager
     {
         terrainGenerator.Update();
         //marchingCubes.Update();
+
+        if(terrainGenerator.savedChunks){
+            finishedSavingChunks = true;
+        }
     }
 }
