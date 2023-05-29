@@ -5,8 +5,8 @@
 StructuredBuffer<int3> Chunks;
 RWStructuredBuffer<float> Result;
 
-int terrain_scale;
-int terrain_amplitude;
+uint terrain_scale;
+uint terrain_amplitude;
 
 uint indexFromId2D(uint group, uint3 id){
     return group * 64 + (id.x + 8 * id.y);
@@ -20,14 +20,39 @@ uint indexFromId3D(uint group, uint3 id){
 void D2Noise (uint3 group_id: SV_GroupID, uint3 individual_id: SV_GroupThreadID )
 {
     uint index = indexFromId2D(group_id.x, individual_id);
+    int3 Chunk = Chunks[group_id.x];
 
-    Result[index] = 75 + 10;
+    int x = Chunk.x * 8 + individual_id.x;
+    int z = Chunk.z * 8 + individual_id.y;
+
+    fnl_state noise = fnlCreateState();
+    noise.noise_type = FNL_NOISE_OPENSIMPLEX2S;
+
+    float scale = terrain_scale;
+
+    noise.frequency = 1/scale;
+    noise.octaves = 5;
+
+    //Result[index] = terrain_scale;;
+    Result[index] = terrain_amplitude * ((fnlGetNoise2D(noise, x, z) + 1) / 2) + 30;
 }
 
 [numthreads(8,8,8)]
 void D3Noise (uint3 group_id: SV_GroupID, uint3 individual_id: SV_GroupThreadID )
 {
     uint index = indexFromId3D(group_id.x, individual_id);
+    int3 Chunk = Chunks[group_id.x];
 
-    Result[index] = 0.75;
+    int x = Chunk.x * 8 + individual_id.x;
+    int y = Chunk.y * 8 + individual_id.y;
+    int z = Chunk.z * 8 + individual_id.z;
+
+    fnl_state noise = fnlCreateState();
+    noise.noise_type = FNL_NOISE_OPENSIMPLEX2S;
+
+    noise.frequency = 1/terrain_scale;
+    noise.octaves = 5;
+
+    //Result[index] = 1;
+    Result[index] = (fnlGetNoise3D(noise, x, y, z) + 1) / 2;
 }

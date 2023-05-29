@@ -3,21 +3,27 @@
 
 struct Triangle {
     float3 a, b, c;
-    uint exists;
+    int exists;
 };
 
-StructuredBuffer<int2> Chunks;
+uint mapHeight;
+uint mapWidth;
+
+StructuredBuffer<int3> Chunks;
 StructuredBuffer<float> Densities;
 RWStructuredBuffer<Triangle> Result;
 
 float3 interp(float3 edgeVertex1, float valueAtVertex1, float3 edgeVertex2, float valueAtVertex2)
 {
-    return float3(0,0,1);
-    //return (edgeVertex1 + (0.5 - valueAtVertex1) * (edgeVertex2 - edgeVertex1)  / (valueAtVertex2 - valueAtVertex1));
+    return (edgeVertex1 + (0.5 - valueAtVertex1) * (edgeVertex2 - edgeVertex1)  / (valueAtVertex2 - valueAtVertex1));
 }
 
 uint indexFromId(uint group, uint3 id){
     return group * 512 + (id.x + 8 * (id.y + 8 * id.z));
+}
+
+float densityFromId(uint group, uint3 id){
+    return Densities[group * 512 + (id.x + 8 * (id.y + 8 * id.z))];
 }
 
 [numthreads(8,8,8)]
@@ -26,14 +32,14 @@ void March (uint3 group_id: SV_GroupID, uint3 individual_id: SV_GroupThreadID)
     uint index = indexFromId(group_id.x, individual_id) * 5;
 
     float cubeValues[8] = {
-       Densities[indexFromId(group_id, uint3(individual_id.x, individual_id.y, individual_id.z + 1))],
-       Densities[indexFromId(group_id, uint3(individual_id.x + 1, individual_id.y, individual_id.z + 1))],
-       Densities[indexFromId(group_id, uint3(individual_id.x + 1, individual_id.y, individual_id.z))],
-       Densities[indexFromId(group_id, uint3(individual_id.x, individual_id.y, individual_id.z))],
-       Densities[indexFromId(group_id, uint3(individual_id.x, individual_id.y + 1, individual_id.z + 1))],
-       Densities[indexFromId(group_id, uint3(individual_id.x + 1, individual_id.y + 1, individual_id.z + 1))],
-       Densities[indexFromId(group_id, uint3(individual_id.x + 1, individual_id.y + 1, individual_id.z))],
-       Densities[indexFromId(group_id, uint3(individual_id.x, individual_id.y + 1, individual_id.z))]
+       densityFromId(group_id.x, uint3(individual_id.x, individual_id.y, individual_id.z + 1)),
+       densityFromId(group_id.x, uint3(individual_id.x + 1, individual_id.y, individual_id.z + 1)),
+       densityFromId(group_id.x, uint3(individual_id.x + 1, individual_id.y, individual_id.z)),
+       densityFromId(group_id.x, uint3(individual_id.x, individual_id.y, individual_id.z)),
+       densityFromId(group_id.x, uint3(individual_id.x, individual_id.y + 1, individual_id.z + 1)),
+       densityFromId(group_id.x, uint3(individual_id.x + 1, individual_id.y + 1, individual_id.z + 1)),
+       densityFromId(group_id.x, uint3(individual_id.x + 1, individual_id.y + 1, individual_id.z)),
+       densityFromId(group_id.x, uint3(individual_id.x, individual_id.y + 1, individual_id.z))
     };
 
     int cubeIndex = 0;
@@ -47,6 +53,7 @@ void March (uint3 group_id: SV_GroupID, uint3 individual_id: SV_GroupThreadID)
     if (cubeValues[7] < 0.5) cubeIndex |= 128;
 
     int edges[] = triTable[cubeIndex];
+
     for (uint i = 0; edges[i] != -1; i += 3)
     {
         int e00 = edgeConnections[edges[i]][0];

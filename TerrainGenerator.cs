@@ -83,50 +83,69 @@ public class TerrainGenerator
         chunksBuffer.Release();
     }
 
-    public void finishedTransforming(){
+    public void finishedTransforming()
+    {
         savedChunks = true;
     }
 
     public void transformTerrain(int index)
-    {        
+    {
         Chunk baseChunk = chunksUsed2D[index];
         List<Chunk> ChunkSlice = chunksUsed
-            .Where(x => x.position.x == baseChunk.position.x && x.position.z == baseChunk.position.z)
+            .Where(
+                x => x.position.x == baseChunk.position.x && x.position.z == baseChunk.position.z
+            )
             .OrderBy(x => x.position.y)
             .ToList();
+
+        Chunk[] currentOutput = ChunkSlice.ToArray();
 
         int startIndex2D = index * 64;
         int startIndex3D = index * 512;
 
         for (int x = 0; x < 8; x++)
         {
-            for (int z = 0; z < 8; z++) {
+            for (int z = 0; z < 8; z++)
+            {
                 float height = result2D[startIndex2D + (x + 8 * z)];
 
-                for(int y = 0; y < 8 * mapHeight; y++){
-                    int subchunkIndex = y / 8;
-                    Chunk subchunk = ChunkSlice[subchunkIndex];
+                for (int subchunkIndex = 0; subchunkIndex < mapHeight; subchunkIndex++)
+                {
+                    Chunk subchunk = currentOutput[subchunkIndex];
 
-                    Voxel voxel = new Voxel();
-                    voxel.material = 1;
+                    for (int y = 0; y < 8; y++)
+                    {
+                        Voxel voxel = new Voxel();
 
-                    if(y > height){
-                        voxel.material = 0;
-                        voxel.density = 0;
-                    } else {
-                        float density = result3D[startIndex3D + (x + 8 * (y + 8 * z))];
-                        voxel.density = density;
+                        if ((y + subchunkIndex * 8) > height)
+                        {
+                            voxel.material = 0;
+                            voxel.density = 0;
+                        }
+                        else
+                        {
+                            voxel.density = result3D[startIndex3D + (x + 8 * (y + 8 * z))];
+                            voxel.material = 1;
+                        }
+
+                        subchunk.setVoxel(x, y, z, voxel);
                     }
-                    
-                    subchunk.setVoxel(x, y % 8, z, voxel);
-                    ChunkSlice[subchunkIndex] = subchunk;
+
+                    currentOutput[subchunkIndex] = subchunk;
                 }
             }
         }
 
-        for(int i = 0; i < ChunkSlice.Count; i++){
-            int originalIndex = chunksUsed.FindIndex(x => x.position.x == baseChunk.position.x && x.position.y == ChunkSlice[i].position.y && x.position.z == baseChunk.position.z);
-            outputChunks[originalIndex] = ChunkSlice[i];
+        for (int i = 0; i < currentOutput.Length; i++)
+        {
+            int originalIndex = chunksUsed.FindIndex(
+                x =>
+                    x.position.x == baseChunk.position.x
+                    && x.position.y == currentOutput[i].position.y
+                    && x.position.z == baseChunk.position.z
+            );
+
+            outputChunks[originalIndex] = currentOutput[i];
         }
     }
 

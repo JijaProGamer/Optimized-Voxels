@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 struct Triangle {
     public Vector3 a, b, c;
-    public uint exists;
+    public int exists;
 };
 
 public class MarchingCubes
@@ -41,7 +41,7 @@ public class MarchingCubes
         Vector3Int[] chunksRaw = new Vector3Int[chunks.Count];
         float[] densitiesRaw = new float[chunks.Count * 512];
         ComputeBuffer chunksBuffer = new ComputeBuffer(chunks.Count, sizeof(int) * 3);
-        ComputeBuffer densitiesBuffer = new ComputeBuffer(chunks.Count, sizeof(int) * 3);
+        ComputeBuffer densitiesBuffer = new ComputeBuffer(chunks.Count * 512, sizeof(float));
         buffer = new ComputeBuffer(512 * 5 * chunks.Count, sizeof(float) * 9 + sizeof(uint));
 
         for (int i = 0; i < chunks.Count; i++)
@@ -50,12 +50,12 @@ public class MarchingCubes
             inputMeshes[i] = chunks[i].mesh;
 
             for(int j = 0; j < 512; j++){
-                densitiesRaw[i * 512 + j] = chunks[j].getVoxel(j).density;
+                densitiesRaw[i * 512 + j] = chunks[i].getVoxel(j).density;
             }
         }
 
         chunksBuffer.SetData(chunksRaw);
-        densitiesBuffer.SetData(chunksRaw);
+        densitiesBuffer.SetData(densitiesRaw);
         shader.SetBuffer(0, "Chunks", chunksBuffer);
         shader.SetBuffer(0, "Densities", densitiesBuffer);
         shader.SetBuffer(0, "Result", buffer);
@@ -81,6 +81,7 @@ public class MarchingCubes
 
         for(int i = startIndex; i < endIndex; i++){
             Triangle tri = result[i];
+
             if(tri.exists == 1){
                 mesh.vertices.Add(tri.a);
                 mesh.vertices.Add(tri.b);

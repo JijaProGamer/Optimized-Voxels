@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class ChunkMesh {
@@ -21,6 +22,8 @@ public class ChunkMesh {
     }
 
     public void setData(){
+        mesh.normals.Reverse();
+
         mesh.vertices = vertices.ToArray();
         mesh.normals = normals.ToArray();
         mesh.colors32 = colors.ToArray();

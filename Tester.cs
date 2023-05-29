@@ -17,16 +17,21 @@ public class Tester : MonoBehaviour
     bool finishedMarchingCubes = false;
 
     int mapSize = 500;
-    int mapHeight = 40;
-    int renderDistance = 4;
+    int mapHeight = 10;
+    int renderDistance = 8;
 
     void Start()
     {
+        GameObject primitive = GameObject.CreatePrimitive(PrimitiveType.Plane);
+        primitive.active = false;
+        Material material = primitive.GetComponent<MeshRenderer>().sharedMaterial;
+        DestroyImmediate(primitive);
+
         int cpu_threads = SystemInfo.processorCount;
 
 
-        settings.terrain_amplitude = 150;
-        settings.terrain_scale = 100;
+        settings.terrain_amplitude = 50;
+        settings.terrain_scale = 50;
 
         chunks.terrainShader = terrainShader;
         chunks.marchingShader = marchingShader;
@@ -46,9 +51,11 @@ public class Tester : MonoBehaviour
                     Mesh rawMesh = new Mesh();
 
                     GameObject holder = new GameObject("Chunk");
-                    holder.transform.position = chunk.position * 8; 
                     MeshRenderer renderer = holder.AddComponent<MeshRenderer>();
                     MeshFilter filter = holder.AddComponent<MeshFilter>();
+
+                    holder.transform.position = chunk.position * 8; 
+                    renderer.material = material;
                     filter.mesh = rawMesh;
                     
                     ChunkMesh mesh = new ChunkMesh();
