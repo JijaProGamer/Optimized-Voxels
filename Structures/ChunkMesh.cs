@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public struct ChunkMesh {
+public class ChunkMesh {
     public Mesh mesh;
     public List<Color32> colors;
     public List<Vector3> vertices;
@@ -21,9 +21,11 @@ public struct ChunkMesh {
     }
 
     public void setData(){
-        mesh.colors32 = colors;
-        mesh.vertices = vertices;
-        mesh.normals = normals;
-        mesh.triangles = triangles;
+        mesh.vertices = vertices.ToArray();
+        mesh.normals = normals.ToArray();
+        mesh.colors32 = colors.ToArray();
+        mesh.triangles = triangles.ToArray();
+
+        mesh.RecalculateNormals();
     }
 };

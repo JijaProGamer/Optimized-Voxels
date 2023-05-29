@@ -16,6 +16,9 @@ public class ChunkManager
     TerrainGenerator terrainGenerator = new TerrainGenerator();
     MarchingCubes marchingCubes = new MarchingCubes();
 
+    List<Chunk> chunksForBuilding;
+    List<Chunk> chunksForMarching;
+
     public bool finishedSavingChunks = false;
     public bool finishedMarchingCubes = false;
 
@@ -30,6 +33,9 @@ public class ChunkManager
         terrainGenerator.shader = terrainShader;
         terrainGenerator.mapHeight = mapHeight;
         terrainGenerator.cpu_threads = cpu_threads;
+
+        marchingCubes.shader = marchingShader;
+        marchingCubes.cpu_threads = cpu_threads;
     }
 
     public Chunk GetChunk(Vector3Int position){
@@ -42,6 +48,8 @@ public class ChunkManager
 
     public void constructTerrain(List<Chunk> chunksToConstruct)
     {
+        chunksForBuilding = chunksToConstruct;
+
         for (int i = 0; i < chunksToConstruct.Count; i++)
         {
             
@@ -50,13 +58,36 @@ public class ChunkManager
         terrainGenerator.setToGenerate(chunksToConstruct, settings);
     }
 
+    public void constructMeshes(List<Chunk> chunksToConstruct){
+        chunksForMarching = chunksToConstruct;
+
+        for (int i = 0; i < chunksToConstruct.Count; i++)
+        {
+            
+        }
+
+        marchingCubes.setToGenerate(chunksToConstruct);
+    }
+
     public void Update()
     {
         terrainGenerator.Update();
-        //marchingCubes.Update();
+        marchingCubes.Update();
 
-        if(terrainGenerator.savedChunks){
+        if(terrainGenerator.savedChunks && !finishedSavingChunks){
             finishedSavingChunks = true;
+
+            for(int i = 0; i < chunksForBuilding.Count; i++){
+                SetChunk(terrainGenerator.outputChunks[i].position, terrainGenerator.outputChunks[i]);
+            }
+        }
+
+        if(marchingCubes.savedMeshes && !finishedMarchingCubes){
+            finishedMarchingCubes = true;
+
+            for(int i = 0; i < chunksForMarching.Count; i++){
+                marchingCubes.outputMeshes[i].setData();
+            }
         }
     }
 }

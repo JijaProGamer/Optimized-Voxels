@@ -21,7 +21,7 @@ public class CustomThreading
 
     public void setData(int _threads, int _workPerThread, int _workAmount)
     {
-        threads = _threads;
+        threads = _threads - 1;
         workPerThread = _workPerThread;
         workAmount = _workAmount;
 

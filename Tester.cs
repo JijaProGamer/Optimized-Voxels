@@ -10,13 +10,15 @@ public class Tester : MonoBehaviour
     ChunkManager chunks = new ChunkManager();
     TerrainSettings settings = new TerrainSettings();
 
+    List<Chunk> chunksToConstruct = new List<Chunk>();
+
     bool finishedConstructingTerrain = false;
     bool startedMarchingCubes = false;
     bool finishedMarchingCubes = false;
 
     int mapSize = 500;
     int mapHeight = 40;
-    int renderDistance = 16;
+    int renderDistance = 4;
 
     void Start()
     {
@@ -32,8 +34,6 @@ public class Tester : MonoBehaviour
         chunks.__init(mapSize, mapHeight, cpu_threads);
         chunks.settings = settings;
 
-        List<Chunk> chunksToConstruct = new List<Chunk>();
-
         for (int x = -renderDistance; x < renderDistance; x++)
         {
             for (int y = 0; y < mapHeight; y++)
@@ -43,8 +43,21 @@ public class Tester : MonoBehaviour
                     chunk.position = new Vector3Int(x, y, z);
                     chunk.__init();
 
+                    Mesh rawMesh = new Mesh();
+
+                    GameObject holder = new GameObject("Chunk");
+                    holder.transform.position = chunk.position * 8; 
+                    MeshRenderer renderer = holder.AddComponent<MeshRenderer>();
+                    MeshFilter filter = holder.AddComponent<MeshFilter>();
+                    filter.mesh = rawMesh;
+                    
+                    ChunkMesh mesh = new ChunkMesh();
+                    mesh.mesh = rawMesh;
+                    mesh.__init();
+
+                    chunk.mesh = mesh;
                     chunksToConstruct.Add(chunk);
-                    chunks.SetChunk(new Vector3Int(x, y, z), chunk);
+                    chunks.SetChunk(chunk.position, chunk);
                 }
             }
         }
@@ -57,12 +70,18 @@ public class Tester : MonoBehaviour
         if(!startedMarchingCubes && finishedConstructingTerrain){
             startedMarchingCubes = true;
             Debug.Log(true);
+
+            chunks.constructMeshes(chunksToConstruct);
         }
 
         chunks.Update();
 
         if(chunks.finishedSavingChunks){
             finishedConstructingTerrain = true;
+        }
+
+        if(chunks.finishedMarchingCubes){
+            finishedMarchingCubes = true;
         }
     }
 }

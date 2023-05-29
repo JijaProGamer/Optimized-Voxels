@@ -15,7 +15,7 @@ public class TerrainGenerator
     ComputeBuffer buffer3D;
     List<Chunk> chunksUsed;
     List<Chunk> chunksUsed2D;
-    Chunk[] outputChunks;
+    public Chunk[] outputChunks;
 
     TerrainSettings settingsUsed;
     CustomThreading threading = new CustomThreading();
@@ -88,7 +88,7 @@ public class TerrainGenerator
     }
 
     public void transformTerrain(int index)
-    {
+    {        
         Chunk baseChunk = chunksUsed2D[index];
         List<Chunk> ChunkSlice = chunksUsed
             .Where(x => x.position.x == baseChunk.position.x && x.position.z == baseChunk.position.z)

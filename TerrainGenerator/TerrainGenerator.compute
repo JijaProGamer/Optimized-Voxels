@@ -21,7 +21,7 @@ void D2Noise (uint3 group_id: SV_GroupID, uint3 individual_id: SV_GroupThreadID 
 {
     uint index = indexFromId2D(group_id.x, individual_id);
 
-    Result[index] = index;
+    Result[index] = 75 + 10;
 }
 
 [numthreads(8,8,8)]
