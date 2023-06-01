@@ -10,18 +10,21 @@ public class Tester : MonoBehaviour
     public ComputeShader terrainShader;
     public ComputeShader renderingShader;
 
-    public int render_distance = 3;
-    public int map_height = 3;
+    int render_distance = 5;
+    int map_height = 5;
 
     List<Vector3Int> toGenerate = new List<Vector3Int>();
 
+    bool startedMarchingCubes = false;
+
     void Start()
     {
-        int threads = SystemInfo.processorCount - 1;
+        int threads = SystemInfo.processorCount;
 
 
         chunkManager.terrainSettings = terrainSettings;
         chunkManager.terrain.terrainSettings = terrainSettings;
+        chunkManager.renderer.threads = threads;
         chunkManager.terrain.threads = threads;
         chunkManager.threads = threads;
 
@@ -29,9 +32,13 @@ public class Tester : MonoBehaviour
         chunkManager.renderer.shader = renderingShader;
 
         terrainSettings.terrain_amplitude = 100;
-        terrainSettings.terrain_scale = 100;  
+        terrainSettings.terrain_frequency = 100;  
+        terrainSettings.terrain_warp_octaves = 4;
 
         terrainSettings.biome_frequency = 100;
+
+        terrainSettings.cave_octaves = 5;
+        terrainSettings.cave_warp_octaves = 4;
 
         terrainSettings.biome_seed = 6969420;
         terrainSettings.cave_seed = 42090;
@@ -55,5 +62,12 @@ public class Tester : MonoBehaviour
     void Update()
     {
         chunkManager.Update();
+
+        if(chunkManager.finishedGeneraingTerrain && !startedMarchingCubes){
+            startedMarchingCubes = true;
+
+            Debug.Log(true);
+            chunkManager.RenderChunks(toGenerate);
+        }
     }
 }

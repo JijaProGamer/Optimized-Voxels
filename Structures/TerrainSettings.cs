@@ -1,10 +1,14 @@
 public class TerrainSettings {
-    public int terrain_scale;
+    public float terrain_frequency;
     public int terrain_amplitude;
     public int terrain_octaves;
-    public int warp_octaves;
+    public int terrain_warp_octaves;
 
-    public int biome_frequency;
+    public float biome_frequency;
+
+    public float cave_frequency;
+    public int cave_octaves;
+    public int cave_warp_octaves;
 
     public int biome_seed;
     public int terrain_seed;

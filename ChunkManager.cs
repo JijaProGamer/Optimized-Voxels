@@ -36,7 +36,8 @@ public class ChunkManager
     bool startedGenerating;
     bool passedBiomes;
     bool generatedBiomes;
-    bool finishedGeneraing;
+    public bool finishedGeneraingTerrain;
+    public bool finishedMarchingCubes;
 
     public void Start()
     {
@@ -57,8 +58,11 @@ public class ChunkManager
             terrain.generate2D();
         }
 
+        if(terrain.finished){
+            finishedGeneraingTerrain = true;
+        }
+
         terrain.Update();
-        Debug.Log(terrain.finished);
     }
 
     private void generateBiomes(){
@@ -109,5 +113,16 @@ public class ChunkManager
         Thread biomeThread = new Thread(generateBiomes);
         biomeThread.IsBackground = true;
         biomeThread.Start();
+    }
+
+    public void RenderChunks(List<Vector3Int> positions){
+        /*positionsToUse = positions;
+        positions2DToUse = positions.Where(pos => pos.y == 0).ToList();
+        biomes = new float[positions2DToUse.Count * 2];
+        startedGenerating = true;
+
+        Thread biomeThread = new Thread(generateBiomes);
+        biomeThread.IsBackground = true;
+        biomeThread.Start();*/
     }
 }

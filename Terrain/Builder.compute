@@ -1,5 +1,6 @@
 #pragma kernel D2Build
 #pragma kernel D3Build
+#include "FastNoiseLite.hlsl"
 
 struct voxelResult {
     float density;
@@ -25,6 +26,22 @@ void D2Build (uint3 id: SV_GroupThreadID, uint3 group_id: SV_GroupID)
     int3 Chunk = positions[group_id.x];
     int x = Chunk.x * 8 + id.x;
     int z = Chunk.z * 8 + id.z;
+
+    /*fnl_state noise = fnlCreateState();
+    noise.noise_type = FNL_NOISE_OPENSIMPLEX2;
+    noise.seed = 79;
+
+    // Gather noise data
+    float noiseData[128 * 128];
+    int index = 0;
+
+    for (int y = 0; y < 128; y++)
+    {
+        for (int x = 0; x < 128; x++) 
+        {
+            noiseData[index++] = fnlGetNoise2D(noise, x, y);
+        }
+    }*/
 
     Result2D[idToIndex2D(id, group_id.x)] = 0.69;
 }

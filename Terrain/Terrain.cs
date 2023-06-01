@@ -32,7 +32,6 @@ public class Terrain {
     AsyncGPUReadbackRequest request2D;
     AsyncGPUReadbackRequest request3D;
 
-    bool generatingChunks;
     bool started2D;
     bool started3D;
     public bool finished;
@@ -63,7 +62,6 @@ public class Terrain {
                         voxel.color = new Color32((byte) value.color_r, (byte) value.color_g, (byte) value.color_g, 0);
                         voxel.density = value.density;
 
-
                         subchunk[x, y, z] = voxel;
                     }
                 }
@@ -84,7 +82,7 @@ public class Terrain {
             
             threading.finished = () => {finished = true;};
             threading.func = transformChunk;
-            threading.setData(threads, 5, chunksToTransform.Count);
+            threading.setData(threads, 25, chunksToTransform.Count);
        }
 
        threading.Update();
