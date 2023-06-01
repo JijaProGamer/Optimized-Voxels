@@ -1,0 +1,47 @@
+#pragma kernel D2Build
+#pragma kernel D3Build
+
+struct voxelResult {
+    float density;
+    int color_r, color_g, color_b;
+};
+
+StructuredBuffer<int3> positions;
+
+RWStructuredBuffer<float> Result2D;
+RWStructuredBuffer<voxelResult> Result3D;
+
+uint idToIndex2D(uint3 id, uint group_id){
+    return group_id * 64 + (id.x + 8 * id.z);
+}
+
+uint idToIndex3D(uint3 id, uint group_id){
+    return group_id * 512 + (id.x + 8 * (id.y + 8 * id.z));
+}
+
+[numthreads(8,1,8)]
+void D2Build (uint3 id: SV_GroupThreadID, uint3 group_id: SV_GroupID)
+{
+    int3 Chunk = positions[group_id.x];
+    int x = Chunk.x * 8 + id.x;
+    int z = Chunk.z * 8 + id.z;
+
+    Result2D[idToIndex2D(id, group_id.x)] = 0.69;
+}
+
+[numthreads(8,8,8)]
+void D3Build (uint3 id: SV_GroupThreadID, uint3 group_id: SV_GroupID)
+{
+    int3 Chunk = positions[group_id.x];
+    int x = Chunk.x * 8 + id.x;
+    int z = Chunk.z * 8 + id.z;
+
+    voxelResult result;
+    result.density = 0.75;
+
+    result.color_r = 15;
+    result.color_g = 28;
+    result.color_b = 99;
+
+    Result3D[idToIndex3D(id, group_id.x)] = result;
+}

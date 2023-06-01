@@ -2,51 +2,59 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public struct Chunk {
+public class Chunk {
     public Vector3Int position;
-    public ChunkMesh mesh;
+    public ChunkMesh mesh = new ChunkMesh();
+    long[] voxels = new long[512 * 2];
 
-    public bool wasInit;
+    public int biome;
+    public float temperature;
+    public float moisture;
 
-    int[] voxels;
-
-    public void __init(){
-        wasInit = true;
-        voxels = new int[512 * 2];
+    public Voxel this[int x, int y, int z]
+    {
+        get { return getVoxel(x + 8 * (y + z * 8)); }
+        set { setVoxel(x + 8 * (y + z * 8), value); }
     }
 
-    public void setVoxel(int index, Voxel voxel){
-        int computedVoxel = 0;
-        int materialVoxel = 0;
+    public Voxel this[int i]
+    {
+        get { return getVoxel(i); }
+        set { setVoxel(i, value); }
+    }
 
-        computedVoxel |= (int) (voxel.density * 128) & 0x7F;
-        computedVoxel |= (voxel.material << 7) & 0xF80;
+    private void setVoxel(int index, Voxel voxel){
+        long computedVoxel = 0;
+        long materialVoxel = 0;
 
-        materialVoxel |= ((voxel.color.r / 2));
-        materialVoxel |= ((voxel.color.g / 2) << 8);
-        materialVoxel |= ((voxel.color.b / 2) << 16); 
+        computedVoxel = Bits.setBits(0, 8, (int) Mathf.Round(voxel.density * 512), computedVoxel); // Density
+
+        materialVoxel = Bits.setBits(0, 7, voxel.color.r, materialVoxel); // Color r
+        materialVoxel = Bits.setBits(8, 15, voxel.color.g, materialVoxel); // Color g
+        materialVoxel = Bits.setBits(16, 23, voxel.color.b, materialVoxel); // Color b
+        materialVoxel = Bits.setBits(24, 35, voxel.material, materialVoxel); // material
 
         voxels[index * 2] = computedVoxel;
         voxels[index * 2 + 1] = materialVoxel;
     }
 
-    public void setVoxel(int x, int y, int z, Voxel voxel){
+    private void setVoxel(int x, int y, int z, Voxel voxel){
         setVoxel(x + 8 * (y + z * 8), voxel);
     }
 
-    public Voxel getVoxel(int index){
-        int computedVoxel = voxels[index * 2];
-        int materialVoxel = voxels[index * 2 + 1];
+    private Voxel getVoxel(int index){
+        long computedVoxel = voxels[index * 2];
+        long materialVoxel = voxels[index * 2 + 1];
 
         Voxel voxel = new Voxel
         {
-            density = (float) (computedVoxel & 0x7F) / 128,
-            material = (computedVoxel & 0xF80) >> 7,
+            density = (float) Bits.getBits(0, 8, computedVoxel) / 512,
+            material = (int) Bits.getBits(24, 35, materialVoxel),
             color = new Color32
             {
-                r = (byte) ((materialVoxel & 0xFF) * 2),
-                g = (byte) (((materialVoxel >> 8) & 0xFF) * 2),
-                b = (byte) (((materialVoxel >> 16) & 0xFF) * 2),
+                r = (byte) Bits.getBits(0, 7, materialVoxel),
+                g = (byte) Bits.getBits(8, 15, materialVoxel),
+                b = (byte) Bits.getBits(16, 23, materialVoxel),
                 a = 0
             }
         };
@@ -54,7 +62,7 @@ public struct Chunk {
         return voxel;
     }
 
-    public Voxel getVoxel(int x, int y, int z){
+    private Voxel getVoxel(int x, int y, int z){
         return getVoxel(x + 8 * (y + z * 8));
     }
 };

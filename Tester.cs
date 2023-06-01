@@ -4,91 +4,56 @@ using UnityEngine;
 
 public class Tester : MonoBehaviour
 {
+    TerrainSettings terrainSettings = new TerrainSettings();
+    ChunkManager chunkManager = new ChunkManager();
+
     public ComputeShader terrainShader;
-    public ComputeShader marchingShader;
+    public ComputeShader renderingShader;
 
-    ChunkManager chunks = new ChunkManager();
-    TerrainSettings settings = new TerrainSettings();
+    public int render_distance = 3;
+    public int map_height = 3;
 
-    List<Chunk> chunksToConstruct = new List<Chunk>();
-
-    bool finishedConstructingTerrain = false;
-    bool startedMarchingCubes = false;
-    bool finishedMarchingCubes = false;
-
-    int mapSize = 500;
-    int mapHeight = 10;
-    int renderDistance = 8;
+    List<Vector3Int> toGenerate = new List<Vector3Int>();
 
     void Start()
     {
-        GameObject primitive = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        primitive.active = false;
-        Material material = primitive.GetComponent<MeshRenderer>().sharedMaterial;
-        DestroyImmediate(primitive);
-
-        int cpu_threads = SystemInfo.processorCount;
+        int threads = SystemInfo.processorCount - 1;
 
 
-        settings.terrain_amplitude = 50;
-        settings.terrain_scale = 50;
+        chunkManager.terrainSettings = terrainSettings;
+        chunkManager.terrain.terrainSettings = terrainSettings;
+        chunkManager.terrain.threads = threads;
+        chunkManager.threads = threads;
 
-        chunks.terrainShader = terrainShader;
-        chunks.marchingShader = marchingShader;
+        chunkManager.terrain.shader = terrainShader;
+        chunkManager.renderer.shader = renderingShader;
 
-        chunks.__init(mapSize, mapHeight, cpu_threads);
-        chunks.settings = settings;
+        terrainSettings.terrain_amplitude = 100;
+        terrainSettings.terrain_scale = 100;  
 
-        for (int x = -renderDistance; x < renderDistance; x++)
-        {
-            for (int y = 0; y < mapHeight; y++)
-            {
-                for (int z = -renderDistance; z < renderDistance; z++) {
-                    Chunk chunk = new Chunk();
-                    chunk.position = new Vector3Int(x, y, z);
-                    chunk.__init();
+        terrainSettings.biome_frequency = 100;
 
-                    Mesh rawMesh = new Mesh();
+        terrainSettings.biome_seed = 6969420;
+        terrainSettings.cave_seed = 42090;
+        terrainSettings.terrain_seed = 12345;
 
-                    GameObject holder = new GameObject("Chunk");
-                    MeshRenderer renderer = holder.AddComponent<MeshRenderer>();
-                    MeshFilter filter = holder.AddComponent<MeshFilter>();
+        chunkManager.map_height = map_height;
+        chunkManager.map_size = 500;
 
-                    holder.transform.position = chunk.position * 8; 
-                    renderer.material = material;
-                    filter.mesh = rawMesh;
-                    
-                    ChunkMesh mesh = new ChunkMesh();
-                    mesh.mesh = rawMesh;
-                    mesh.__init();
-
-                    chunk.mesh = mesh;
-                    chunksToConstruct.Add(chunk);
-                    chunks.SetChunk(chunk.position, chunk);
+        for(int x = -render_distance; x <= render_distance; x++){
+            for(int y = 0; y < map_height; y++){
+                for(int z = -render_distance; z <= render_distance; z++){
+                    toGenerate.Add(new Vector3Int(x, y, z));
                 }
             }
         }
 
-        chunks.constructTerrain(chunksToConstruct);
+        chunkManager.Start();
+        chunkManager.GenerateChunks(toGenerate);
     }
 
     void Update()
     {
-        if(!startedMarchingCubes && finishedConstructingTerrain){
-            startedMarchingCubes = true;
-            Debug.Log(true);
-
-            chunks.constructMeshes(chunksToConstruct);
-        }
-
-        chunks.Update();
-
-        if(chunks.finishedSavingChunks){
-            finishedConstructingTerrain = true;
-        }
-
-        if(chunks.finishedMarchingCubes){
-            finishedMarchingCubes = true;
-        }
+        chunkManager.Update();
     }
 }

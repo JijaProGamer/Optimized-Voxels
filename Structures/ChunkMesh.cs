@@ -10,18 +10,14 @@ public class ChunkMesh {
     public List<Vector3> normals;
     public List<int> triangles;
 
-    public bool wasInit;
-
     public void __init(){
-        wasInit = true;
-
         colors = new List<Color32>();
         vertices = new List<Vector3>();
         normals = new List<Vector3>();
         triangles = new List<int>();
     }
 
-    public void setData(){
+    public void SetData(){
         mesh.normals.Reverse();
 
         mesh.vertices = vertices.ToArray();
