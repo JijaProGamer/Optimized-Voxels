@@ -3,7 +3,7 @@
 
 struct Triangle {
     float3 a, b, c;
-    uint chunk;
+    int chunk;
 };
 
 StructuredBuffer<int3> positions;
@@ -20,13 +20,13 @@ uint idToIndex(uint3 id, uint group_id){
 }
 
 float getDensity(int x, int y, int z, uint group_id){
+    int3 group = positions[group_id];
     return Densities[group_id * 512 + (x + 8 * (y + 8 * z))]; // Rewrite to support neighbors
 }
 
 [numthreads(8,8,8)]
 void March (uint3 id: SV_GroupThreadID, uint3 group_id: SV_GroupID)
 {
-    uint index = idToIndex(id, group_id.x);
     float cubeValues[8] = {
        getDensity(id.x, id.y, id.z + 1, group_id.x),
        getDensity(id.x + 1, id.y, id.z + 1, group_id.x),
@@ -59,7 +59,6 @@ void March (uint3 id: SV_GroupThreadID, uint3 group_id: SV_GroupID)
         
         int e20 = edgeConnections[edges[i + 2]][0];
         int e21 = edgeConnections[edges[i + 2]][1];
-
 
         Triangle tri;
         tri.a = interp(cornerOffsets[e00], cubeValues[e00], cornerOffsets[e01], cubeValues[e01]) + id;

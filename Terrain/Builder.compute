@@ -12,6 +12,11 @@ StructuredBuffer<int3> positions;
 RWStructuredBuffer<float> Result2D;
 RWStructuredBuffer<voxelResult> Result3D;
 
+int seed;
+int amplitude;
+int octaves;
+float frequency;
+
 uint idToIndex2D(uint3 id, uint group_id){
     return group_id * 64 + (id.x + 8 * id.z);
 }
@@ -27,23 +32,14 @@ void D2Build (uint3 id: SV_GroupThreadID, uint3 group_id: SV_GroupID)
     int x = Chunk.x * 8 + id.x;
     int z = Chunk.z * 8 + id.z;
 
-    /*fnl_state noise = fnlCreateState();
-    noise.noise_type = FNL_NOISE_OPENSIMPLEX2;
-    noise.seed = 79;
+    fnl_state noiseState = fnlCreateState();
+    noiseState.noise_type = FNL_NOISE_OPENSIMPLEX2;
+    noiseState.seed = seed;
 
-    // Gather noise data
-    float noiseData[128 * 128];
-    int index = 0;
+    float noise = ((fnlGetNoise2D(noiseState, x, z) + 1) / 2) * amplitude;
 
-    for (int y = 0; y < 128; y++)
-    {
-        for (int x = 0; x < 128; x++) 
-        {
-            noiseData[index++] = fnlGetNoise2D(noise, x, y);
-        }
-    }*/
-
-    Result2D[idToIndex2D(id, group_id.x)] = 0.69;
+    //Result2D[idToIndex2D(id, group_id.x)] = id.x + id.z;
+    Result2D[idToIndex2D(id, group_id.x)] = noise;
 }
 
 [numthreads(8,8,8)]
@@ -51,14 +47,20 @@ void D3Build (uint3 id: SV_GroupThreadID, uint3 group_id: SV_GroupID)
 {
     int3 Chunk = positions[group_id.x];
     int x = Chunk.x * 8 + id.x;
+    int y = Chunk.y * 8 + id.y;
     int z = Chunk.z * 8 + id.z;
 
     voxelResult result;
-    result.density = 0.75;
 
     result.color_r = 15;
     result.color_g = 28;
     result.color_b = 99;
+
+    fnl_state noiseState = fnlCreateState();
+    noiseState.noise_type = FNL_NOISE_OPENSIMPLEX2;
+    noiseState.seed = seed;
+
+    result.density = (fnlGetNoise3D(noiseState, x, y, z) + 1) / 2;
 
     Result3D[idToIndex3D(id, group_id.x)] = result;
 }

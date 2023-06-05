@@ -27,7 +27,7 @@ public class Chunk {
         long computedVoxel = 0;
         long materialVoxel = 0;
 
-        computedVoxel = Bits.setBits(0, 8, (int) Mathf.Round(voxel.density * 512), computedVoxel); // Density
+        computedVoxel = Bits.setBits(0, 12, (int) Mathf.Round(voxel.density * 8192), computedVoxel); // Density
 
         materialVoxel = Bits.setBits(0, 7, voxel.color.r, materialVoxel); // Color r
         materialVoxel = Bits.setBits(8, 15, voxel.color.g, materialVoxel); // Color g
@@ -48,7 +48,7 @@ public class Chunk {
 
         Voxel voxel = new Voxel
         {
-            density = (float) Bits.getBits(0, 8, computedVoxel) / 512,
+            density = (float) Bits.getBits(0, 12, computedVoxel) / 8192,
             material = (int) Bits.getBits(24, 35, materialVoxel),
             color = new Color32
             {

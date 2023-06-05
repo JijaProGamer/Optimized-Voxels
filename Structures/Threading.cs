@@ -6,6 +6,7 @@ public class CustomThreading
 {
     public Action<int> func;
     public Action finished;
+    public bool useMainThread;
 
     public bool isWorking = false;
     public bool finishedWorking = false;
@@ -18,10 +19,11 @@ public class CustomThreading
     int threads;
     int workPerThread;
     int workAmount;
+    int workFinished;
 
     public void setData(int _threads, int _workPerThread, int _workAmount)
     {
-        threads = _threads - 1;
+        threads = _threads;
         workPerThread = _workPerThread;
         workAmount = _workAmount;
 
@@ -30,25 +32,33 @@ public class CustomThreading
 
         threads_used = 0;
         current_batch = 0;
+        workFinished = 0;
 
         isWorking = true;
         finishedWorking = false;
     }
 
-    void run(int start, int end)
+    void run(object state)
     {
+        int[] range = (int[])state;
+        int start = range[0];
+        int end = range[1];
+
         for (int j = start; j < end; j++)
         {
             func(j);
 
-            if(j == end - 1 && j == workAmount - 1){
-                isWorking = false;
-                finishedWorking = true;
-                finished();
-            }
+            Interlocked.Increment(ref workFinished);
         }
 
-        threads_used--;
+        if (Interlocked.CompareExchange(ref workFinished, 0, 0) == workAmount)
+        {
+            isWorking = false;
+            finishedWorking = true;
+            finished?.Invoke();
+        }
+
+        Interlocked.Decrement(ref threads_used);
     }
 
     public void Update()
@@ -69,13 +79,17 @@ public class CustomThreading
                         end = start + extra_work;
                     }
 
-                    Thread thread = new Thread(() => run(start, end));
-                    thread.Name = "Threading";
-                    thread.IsBackground = true;
-                    thread.Start();
+                    if (!useMainThread)
+                    {
+                        ThreadPool.QueueUserWorkItem(run, new int[] { start, end });
+                    }
+                    else
+                    {
+                        run(new int[] { start, end });
+                    }
 
                     current_batch++;
-                    threads_used++;
+                    Interlocked.Increment(ref threads_used);
                 }
             }
         }
