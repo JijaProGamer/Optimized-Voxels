@@ -11,7 +11,7 @@ struct voxelResult {
     public int color_r, color_g, color_b;
 }
 
-public class Terrain {
+public class TerrainGenerator {
     public int threads;
     public ComputeShader shader;
     public TerrainSettings terrainSettings = new TerrainSettings();

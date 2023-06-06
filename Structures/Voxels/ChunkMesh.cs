@@ -19,17 +19,11 @@ public class ChunkMesh {
     }
 
     public void SetData(){
-        if(triangles.Count > 0){
-            //chunkObject.SetActive(true);
-            //mesh.normals.Reverse();
-            mesh.vertices = vertices.ToArray();
-            mesh.normals = normals.ToArray();
-            mesh.colors32 = colors.ToArray();
-            mesh.triangles = triangles.ToArray();
+        mesh.vertices = vertices.ToArray();
+        mesh.normals = normals.ToArray();
+        mesh.colors32 = colors.ToArray();
+        mesh.triangles = triangles.ToArray();
 
-            mesh.RecalculateNormals();
-        } else {
-            //chunkObject.SetActive(false);
-        }
+        mesh.RecalculateNormals(); // Remove Later
     }
 };

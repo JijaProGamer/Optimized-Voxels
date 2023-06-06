@@ -12,7 +12,7 @@ struct Triangle
     public int chunk;
 }
 
-public class Rendering
+public class Renderer
 {
     public int threads;
     public ComputeShader shader;
