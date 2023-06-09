@@ -6,18 +6,27 @@ using UnityEngine.Rendering;
 
 using Unity.Mathematics;
 
-struct voxelResult {
+struct voxelResult
+{
     public float density;
-    public int color_r, color_g, color_b;
+    public int color_r,
+        color_g,
+        color_b;
 }
 
-public class TerrainGenerator {
+public class TerrainGenerator
+{
     public int threads;
+    public int map_height;
     public ComputeShader shader;
-    public TerrainSettings terrainSettings = new TerrainSettings();
+    public TerrainSettings terrainSettings;
+    public ChunkManager parent;
 
-    public List<Vector3Int> D3ToGenerate;
-    public List<Vector3Int> D2ToGenerate;
+    List<Vector2Int> inputPositionsBiomes;
+    List<Vector2Int> inputPositionsSimple;
+    List<Vector2Int> inputPositions;
+    List<int> usedPositions;
+
     public List<Chunk> chunksToTransform;
     public List<Chunk> chunksToTransform3D;
 
@@ -27,8 +36,9 @@ public class TerrainGenerator {
 
     CustomThreading threading = new CustomThreading();
 
-    ComputeBuffer position2DBuffer;
-    ComputeBuffer position3DBuffer;
+    ComputeBuffer positionBuffer;
+    ComputeBuffer positionSimpleBuffer;
+    ComputeBuffer positionUsedBuffer;
     ComputeBuffer output2DBuffer;
     ComputeBuffer output3DBuffer;
     AsyncGPUReadbackRequest request2D;
@@ -37,105 +47,176 @@ public class TerrainGenerator {
     bool started2D;
     bool started3D;
     public bool finished;
-    public bool finished_requests;
+    bool finished_biomes;
+    bool finished_requests;
 
-    void transformChunk(int i){
-        Chunk baseChunk = chunksToTransform[i];
-        List<Chunk> subchunks = chunksToTransform3D
-            .Where(chunk => chunk.position.x == baseChunk.position.x && chunk.position.z == baseChunk.position.z)
-            .OrderBy(chunk => chunk.position.y)
-            .ToList();
+    int width_used;
 
+    void transformChunk(int i)
+    {
+        Vector2Int basePosition = inputPositions[usedPositions[i]];
         int baseIndex = i * 64;
-        for(int x = 0; x < 8; x++){
-            for(int z = 0; z < 8; z++){
-                //int height = (int) result2D[baseIndex + (x + 8 * z)];
-                Vector3 pos = new Vector3((float) (x + baseChunk.position.x * 8) / 100, 0, (float) (z + baseChunk.position.z * 8) / 100);
-                int height = (int) (((noise.snoise(pos) + 1) / 2) * terrainSettings.terrain_amplitude);
 
-                for(int subchunkIndex = 0; subchunkIndex < subchunks.Count; subchunkIndex++){
-                    Chunk subchunk = subchunks[subchunkIndex];
-                    int subchunkMaxIndex = chunksToTransform3D.FindIndex(chunk => chunk.position == subchunk.position);
-                    int maxIndex = subchunkMaxIndex * 512;
+        //Debug.Log(i);
 
-                    for(int y = 0; y < 8; y++){
+        for (int subchunkIndex = 0; subchunkIndex < map_height; subchunkIndex++)
+        {
+            Chunk subchunk = new Chunk();
+            subchunk.position = new Vector3Int(basePosition.x, subchunkIndex, basePosition.y);
+
+            for (int x = 0; x < 8; x++)
+            {
+                for (int z = 0; z < 8; z++)
+                {
+                    float height = result2D[baseIndex + (x + 8 * z)];
+                    
+                    for (int y = 0; y < 8; y++)
+                    {
                         int real_y = y + subchunkIndex * 8;
-                        voxelResult value = result3D[maxIndex + (x + 8 * (y + 8 * z))]; 
+                        int index3D = (x + width_used * (real_y + map_height * z));
+
+                        voxelResult value = result3D[index3D + (x + 8 * (y + 8 * z))];
                         Voxel voxel = new Voxel();
 
-                        voxel.color = new Color32((byte) value.color_r, (byte) value.color_g, (byte) value.color_g, 0);
-                        
-                        if(real_y <= height){
+                        voxel.color = new Color32(
+                            (byte)value.color_r,
+                            (byte)value.color_g,
+                            (byte)value.color_g,
+                            0
+                        );
+
+                        if (real_y < height)
+                        {
                             voxel.density = 0.8f;
                             //voxel.density = value.density;
-                        } else {
+                        }
+                        else
+                        {
                             voxel.density = 0;
                         }
 
-                        subchunk[x, y, z] = voxel;
+                        subchunk.voxels[x, y, z] = voxel;
                     }
                 }
             }
+
+            parent.chunks[basePosition.x, subchunkIndex, basePosition.y] = subchunk;
         }
     }
 
-    public void Update(){
-       if(started2D && request2D.done && !request2D.hasError && !started3D){
+    void generateSlice(int i)
+    {
+       Vector2Int basePosition = inputPositionsBiomes[i];
+
+        ChunkSlice chunkSlice = new ChunkSlice();
+        chunkSlice.position = basePosition;
+
+        parent.chunkSlices[basePosition.x, basePosition.y] = chunkSlice;
+
+        Debug.Log(i);
+    }
+
+    public void Update()
+    {
+        if (finished_biomes && !started2D)
+        {
+            started2D = true;
+
+            generate2D();
+        }
+
+        if (started2D && request2D.done && !request2D.hasError && !started3D)
+        {
             result2D = request2D.GetData<float>().ToArray();
             output2DBuffer.Release();
 
             generate3D();
-       }
+        }
 
-       if(started3D && request3D.done && !request3D.hasError && !finished_requests){
+        if (started3D && request3D.done && !request3D.hasError && !finished_requests)
+        {
             finished_requests = true;
             result3D = request3D.GetData<voxelResult>().ToArray();
             output3DBuffer.Release();
-            
-            threading.finished = () => {finished = true;};
-            threading.func = transformChunk;
-            threading.setData(threads, 25, chunksToTransform.Count);
-       }
 
-       threading.Update();
+            threading.finished = () =>
+            {
+                finished = true;
+            };
+            threading.func = transformChunk;
+            threading.setData(threads, 25, usedPositions.Count);
+        }
+
+        threading.Update();
     }
 
-    public void generate2D(){
+    public void generate(
+        List<Vector2Int> _inputPositionsBiomes,
+        List<Vector2Int> _inputPositionsSimple,
+        List<Vector2Int> _inputPositions,
+        List<int> _usedPositions,
+        int width
+    )
+    {
+        output2DBuffer = new ComputeBuffer(_inputPositions.Count * 64, sizeof(float));
+        output3DBuffer = new ComputeBuffer(
+            _inputPositions.Count * map_height * 512,
+            sizeof(float) + sizeof(int) * 3
+        );
+
+        positionBuffer = new ComputeBuffer(_inputPositions.Count, sizeof(int) * 2);
+
+        positionSimpleBuffer = new ComputeBuffer(_inputPositionsSimple.Count, sizeof(int) * 2); // 2D only
+        positionUsedBuffer = new ComputeBuffer(_usedPositions.Count, sizeof(int));
+
+        positionBuffer.SetData(_inputPositions);
+
+        positionSimpleBuffer.SetData(_inputPositions);
+        positionUsedBuffer.SetData(_usedPositions);
+
+        threading.finished = () =>
+        {
+            finished_biomes = true;
+        };
+        threading.func = generateSlice;
+        threading.setData(threads, 100, _inputPositionsBiomes.Count);
+
+        inputPositions = _inputPositions;
+        usedPositions = _usedPositions;
+        inputPositionsBiomes = _inputPositionsBiomes;
+        inputPositionsSimple = _inputPositionsSimple;
+        width_used = width;
+    }
+
+    public void generate2D()
+    {
         started2D = true;
-
-        output2DBuffer = new ComputeBuffer(D2ToGenerate.Count * 64, sizeof(float));
-        output3DBuffer = new ComputeBuffer(D3ToGenerate.Count * 512, sizeof(float) + sizeof(int) * 3);
-        position2DBuffer = new ComputeBuffer(D2ToGenerate.Count, sizeof(int) * 3);
-        position3DBuffer = new ComputeBuffer(D3ToGenerate.Count, sizeof(int) * 3);
-
-        position2DBuffer.SetData(D2ToGenerate);
-        position3DBuffer.SetData(D3ToGenerate);
 
         shader.SetFloat("frequency", terrainSettings.terrain_frequency);
         shader.SetInt("octaves", terrainSettings.terrain_octaves);
         shader.SetInt("amplitude", terrainSettings.terrain_amplitude);
         shader.SetInt("seed", terrainSettings.terrain_seed);
 
-        shader.SetBuffer(0, "positions", position2DBuffer);
+        shader.SetBuffer(0, "positions", positionBuffer);
         shader.SetBuffer(0, "Result2D", output2DBuffer);
 
-        shader.Dispatch(0, D2ToGenerate.Count, 1, 1);
+        shader.Dispatch(0, usedPositions.Count, 1, 1);
         request2D = AsyncGPUReadback.Request(output2DBuffer);
-        position2DBuffer.Release();
     }
 
-    public void generate3D(){
+    public void generate3D()
+    {
         started3D = true;
 
         shader.SetFloat("frequency", terrainSettings.cave_frequency);
         shader.SetInt("octaves", terrainSettings.cave_octaves);
         shader.SetInt("seed", terrainSettings.cave_seed);
 
-        shader.SetBuffer(1, "positions", position3DBuffer);
+        shader.SetBuffer(1, "positions", positionBuffer);
         shader.SetBuffer(1, "Result3D", output3DBuffer);
 
-        shader.Dispatch(1, D3ToGenerate.Count, 1, 1);
+        shader.Dispatch(1, usedPositions.Count, map_height, 1);
         request3D = AsyncGPUReadback.Request(output3DBuffer);
-        position3DBuffer.Release();
+        positionBuffer.Release();
     }
 };

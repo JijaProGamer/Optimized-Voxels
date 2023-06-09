@@ -61,6 +61,8 @@ public class Tester : MonoBehaviour
         chunkManager.terrainGenerator.shader = terrainShader;
         chunkManager.renderer.shader = renderingShader;
 
+        chunkManager.terrainGenerator.parent = chunkManager;
+        chunkManager.terrainGenerator.map_height = map_height;
         chunkManager.map_height = map_height;
         chunkManager.map_size = 500;
 
@@ -68,7 +70,7 @@ public class Tester : MonoBehaviour
 
         // Game logic
 
-        Vector3Int playerPosition = new Vector3Int(5, 20, 0);
+        Vector3Int playerPosition = new Vector3Int(0, 20, 0);
 
         for (int x = -render_distance + playerPosition.x; x <= render_distance + playerPosition.x; x++)
         {

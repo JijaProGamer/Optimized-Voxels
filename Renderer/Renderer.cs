@@ -60,8 +60,6 @@ public class Renderer
                 finished = true;
             };
 
-            Debug.Log(triCount[0]);
-
             threading.func = transformMesh;
             threading.setData(threads, 5000, triCount[0]);
 
