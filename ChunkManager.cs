@@ -90,9 +90,9 @@ public class ChunkManager
             }
         }
 
-        for (int x = minX; x < maxX; x++)
+        for (int x = minX; x <= maxX; x++)
         {
-            for (int z = minZ; z < maxZ; z++)
+            for (int z = minZ; z <= maxZ; z++)
             {
                 int inputPositionIndex = positions.IndexOf(new Vector2Int(x, z));
                 inputPositions.Add(new Vector2Int(x, z));

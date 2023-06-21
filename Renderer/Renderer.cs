@@ -61,7 +61,7 @@ public class Renderer
             };
 
             threading.func = transformMesh;
-            threading.setData(threads, 5000, triCount[0]);
+            threading.SetData(threads, 5000, triCount[0]);
 
             outputBuffer.Release();
             countBuffer.Release();

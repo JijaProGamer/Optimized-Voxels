@@ -13,7 +13,7 @@ public class Tester : MonoBehaviour
     public ComputeShader renderingShader;
 
     int threads;
-    int render_distance = 5;
+    int render_distance = 6;
     int render_height = 20;
     int map_height = 5;
 
@@ -86,7 +86,7 @@ public class Tester : MonoBehaviour
         }
 
         chunkManager.meshPool.Init();
-        chunkManager.meshPool.GenerateMeshes((int)(10f / 100f * (float)toGenerate.Count));
+        //chunkManager.meshPool.GenerateMeshes((int)(10f / 100f * (float)toGenerate.Count));
 
         StartCoroutine(startRunning());
     }

@@ -8,37 +8,39 @@ public class CustomThreading
     public Action finished;
     public bool useMainThread;
 
-    public bool isWorking = false;
-    public bool finishedWorking = false;
+    private int session = 0;
+    private int threads;
+    private int workPerThread;
+    private int workAmount;
+    private int workFinished;
 
-    int threads_used;
-    int current_batch;
-    int batches;
-    int extra_work;
+    private bool isWorking = false;
+    private bool finishedWorking = false;
 
-    int threads;
-    int workPerThread;
-    int workAmount;
-    int workFinished;
+    private int threadsUsed;
+    private int currentBatch;
+    private int batches;
+    private int extraWork;
 
-    public void setData(int _threads, int _workPerThread, int _workAmount)
+    public void SetData(int threads, int workPerThread, int workAmount)
     {
-        threads = _threads;
-        workPerThread = _workPerThread;
-        workAmount = _workAmount;
+        session++;
+        this.threads = threads;
+        this.workPerThread = workPerThread;
+        this.workAmount = workAmount;
 
-        batches = (_workAmount / _workPerThread) - 1;
-        extra_work = _workAmount % _workPerThread;
+        batches = (workAmount / workPerThread) - 1;
+        extraWork = workAmount % workPerThread;
 
-        threads_used = 0;
-        current_batch = 0;
+        threadsUsed = 0;
+        currentBatch = 0;
         workFinished = 0;
 
         isWorking = true;
         finishedWorking = false;
     }
 
-    void run(object state)
+    private void Run(object state)
     {
         int[] range = (int[])state;
         int start = range[0];
@@ -47,49 +49,49 @@ public class CustomThreading
         for (int j = start; j < end; j++)
         {
             func(j);
+            int currentWorkFinished = Interlocked.Increment(ref workFinished);
 
-            Interlocked.Increment(ref workFinished);
+            if (currentWorkFinished >= workAmount)
+            {
+                Debug.Log("Finished session " + session);
+                isWorking = false;
+                finishedWorking = true;
+                finished?.Invoke();
+            }
         }
-
-        if (Interlocked.CompareExchange(ref workFinished, 0, 0) == workAmount)
-        {
-            isWorking = false;
-            finishedWorking = true;
-            finished?.Invoke();
-        }
-
-        Interlocked.Decrement(ref threads_used);
+        
+        Interlocked.Decrement(ref threadsUsed);
     }
 
     public void Update()
     {
-        if (isWorking && !finishedWorking && threads_used < threads)
+        if (isWorking && !finishedWorking && threadsUsed < threads)
         {
-            int availableThreads = threads - threads_used;
+            int availableThreads = threads - threadsUsed;
 
             for (int i = 0; i < availableThreads; i++)
             {
-                if (current_batch <= batches || ((batches + 1) == current_batch && extra_work > 0))
+                if (currentBatch <= batches || ((batches + 1) == currentBatch && extraWork > 0))
                 {
-                    int start = current_batch * workPerThread;
-                    int end = (current_batch + 1) * workPerThread;
+                    int start = currentBatch * workPerThread;
+                    int end = (currentBatch + 1) * workPerThread;
 
-                    if (current_batch == (batches + 1) && extra_work > 0)
+                    if (currentBatch == (batches + 1) && extraWork > 0)
                     {
-                        end = start + extra_work;
+                        end = start + extraWork;
                     }
 
                     if (!useMainThread)
                     {
-                        ThreadPool.QueueUserWorkItem(run, new int[] { start, end });
+                        ThreadPool.QueueUserWorkItem(Run, new int[] { start, end });
                     }
                     else
                     {
-                        run(new int[] { start, end });
+                        Run(new int[] { start, end });
                     }
 
-                    current_batch++;
-                    Interlocked.Increment(ref threads_used);
+                    currentBatch++;
+                    Interlocked.Increment(ref threadsUsed);
                 }
             }
         }

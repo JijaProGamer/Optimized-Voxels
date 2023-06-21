@@ -57,8 +57,6 @@ public class TerrainGenerator
         Vector2Int basePosition = inputPositions[usedPositions[i]];
         int baseIndex = i * 64;
 
-        //Debug.Log(i);
-
         for (int subchunkIndex = 0; subchunkIndex < map_height; subchunkIndex++)
         {
             Chunk subchunk = new Chunk();
@@ -81,7 +79,7 @@ public class TerrainGenerator
                         voxel.color = new Color32(
                             (byte)value.color_r,
                             (byte)value.color_g,
-                            (byte)value.color_g,
+                            (byte)value.color_b,
                             0
                         );
 
@@ -112,12 +110,10 @@ public class TerrainGenerator
         chunkSlice.position = basePosition;
 
         parent.chunkSlices[basePosition.x, basePosition.y] = chunkSlice;
-
-        Debug.Log(i);
     }
 
     public void Update()
-    {
+    {        
         if (finished_biomes && !started2D)
         {
             started2D = true;
@@ -139,12 +135,14 @@ public class TerrainGenerator
             result3D = request3D.GetData<voxelResult>().ToArray();
             output3DBuffer.Release();
 
+            Debug.Log("Start 3D");
+
             threading.finished = () =>
             {
                 finished = true;
             };
             threading.func = transformChunk;
-            threading.setData(threads, 25, usedPositions.Count);
+            threading.SetData(threads, 25, usedPositions.Count);
         }
 
         threading.Update();
@@ -179,7 +177,7 @@ public class TerrainGenerator
             finished_biomes = true;
         };
         threading.func = generateSlice;
-        threading.setData(threads, 100, _inputPositionsBiomes.Count);
+        threading.SetData(threads, 100, _inputPositionsBiomes.Count);
 
         inputPositions = _inputPositions;
         usedPositions = _usedPositions;

@@ -41,6 +41,6 @@ public class MeshPool {
     }
 
    public void GenerateMeshes(int number){
-    threading.setData(2, 3, number);
+    threading.SetData(2, 3, number);
    }
 };
