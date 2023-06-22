@@ -53,13 +53,12 @@ public class CustomThreading
 
             if (currentWorkFinished >= workAmount)
             {
-                Debug.Log("Finished session " + session);
                 isWorking = false;
                 finishedWorking = true;
                 finished?.Invoke();
             }
         }
-        
+
         Interlocked.Decrement(ref threadsUsed);
     }
 

@@ -35,11 +35,13 @@ public class ChunkManager
 
     public void Update()
     {
-        if(generatingChunks && terrainGenerator.finished){
+        if (generatingChunks && terrainGenerator.finished)
+        {
             finishedGeneratingChunks = true;
         }
 
-        if(renderingChunks && renderer.finished){
+        if (renderingChunks && renderer.finished)
+        {
             finishedRenderingChunks = true;
         }
 
@@ -74,8 +76,8 @@ public class ChunkManager
                 maxZ = position.y;
         }
 
-        int width = (int)MathF.Abs(minX - maxX) + 1;
-        int length = (int)MathF.Abs(minZ - maxZ) + 1;
+        int width = (int)MathF.Abs(minX - maxX) + 2; // TODO: Might use 1
+        int length = (int)MathF.Abs(minZ - maxZ) + 2;
 
         List<Vector2Int> inputPositionsBiomes = new List<Vector2Int>();
         List<Vector2Int> inputPositionsSimple = new List<Vector2Int>();
@@ -104,11 +106,10 @@ public class ChunkManager
             }
         }
 
-        for (int x = minX - 1; x < maxX + 1; x++)
+        for (int x = minX - 1; x <= maxX + 1; x++)
         {
-            for (int z = minZ - 1; z < maxZ + 1; z++)
+            for (int z = minZ - 1; z <= maxZ + 1; z++)
             {
-
                 /*
                 if not file exists
                 */
@@ -116,7 +117,13 @@ public class ChunkManager
             }
         }
 
-        terrainGenerator.generate(inputPositionsBiomes, inputPositionsSimple, inputPositions, usedPositions, width);
+        terrainGenerator.generate(
+            inputPositionsBiomes,
+            inputPositionsSimple,
+            inputPositions,
+            usedPositions,
+            width
+        );
         generatingChunks = true;
     }
 
@@ -129,8 +136,10 @@ public class ChunkManager
 
         int minX = map_size;
         int maxX = -map_size;
-        int minY = -1;
-        int maxY = map_height;
+        int minY = map_height;
+        int maxY = -map_height;
+        int minZ = map_size;
+        int maxZ = -map_size;
 
         for (int i = 0; i < positions.Count; i++)
         {
@@ -144,10 +153,65 @@ public class ChunkManager
                 minY = position.y;
             if (position.y > maxY)
                 maxY = position.y;
+            if (position.z < minZ)
+                minZ = position.z;
+            if (position.z > maxZ)
+                maxZ = position.z;
         }
 
-        int width = (int)MathF.Abs(minX - maxX) + 1;
-        int height = (int)MathF.Abs(minY - maxY) + 1;
+        int width = (int)MathF.Abs(minX - maxX) + 2;// TODO: Might use 1
+        int height = (int)MathF.Abs(minY - maxY) + 2;
+        int length = (int)MathF.Abs(minZ - maxZ) + 2;
+
+        List<int> densities = new List<int>();
+        List<Chunk> usedChunks = new List<Chunk>();
+        List<int> usedPositions = new List<int>();
+
+        //List<Vector2Int> inputPositionsBiomes = new List<Vector2Int>();
+        List<Vector3Int> inputPositionsSimple = new List<Vector3Int>();
+       // List<Vector2Int> inputPositions = new List<Vector2Int>();
+
+       int simpleX = -1;
+       int simpleY = -1;
+       int simpleZ = -1;
+
+        for (int x = minX; x <= maxX; x++)
+        {
+            simpleX += 1;
+            simpleY = -1;
+            for (int y = minY; y <= maxY; y++)
+            {
+                simpleY += 1;
+                simpleZ = -1;
+                for (int z = minZ; z <= maxZ; z++)
+                {
+                    simpleZ += 1;
+
+                    int start = (simpleX + width * (simpleY + height * simpleZ)) * 512;
+                    int end = (simpleX + width * (simpleY + height * simpleZ) + 1) * 512;
+                    Chunk chunk = chunks[x, y, z];
+
+                    for(int i = start; i < end; i++){
+                        //densities[i] = this.chunks[x, y, z].voxels[i].density;
+                        Debug.Log(i);
+                        Debug.Log(chunk.voxels[i].density);
+                    }
+
+                    inputPositionsSimple.Add(new Vector3Int(x, y, z));
+                    int inputPositionIndex = positions.IndexOf(new Vector3Int(x, y, z));
+
+                    if (inputPositionIndex >= 0)
+                    {
+                        usedChunks.Add(chunk);
+                        usedPositions.Add(inputPositionIndex);
+                    }
+                }
+            }
+        }
+
+        Debug.Log(densities.Count + " " + width * height * length);
+
+        //renderer.generate();
 
         renderingChunks = true;
     }

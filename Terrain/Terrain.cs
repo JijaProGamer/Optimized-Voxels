@@ -109,6 +109,8 @@ public class TerrainGenerator
         ChunkSlice chunkSlice = new ChunkSlice();
         chunkSlice.position = basePosition;
 
+        Debug.Log(basePosition);
+
         parent.chunkSlices[basePosition.x, basePosition.y] = chunkSlice;
     }
 

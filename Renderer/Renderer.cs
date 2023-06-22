@@ -72,6 +72,7 @@ public class Renderer
 
     public void generate(float[] densities, List<Chunk> chunks, List<Vector3Int> positions)
     {
+        Debug.Log("OK"); 
         outputBuffer = new ComputeBuffer(
             positions.Count * 512 * 5,
             sizeof(float) * 9 + sizeof(int),
