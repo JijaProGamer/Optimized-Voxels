@@ -159,11 +159,11 @@ public class ChunkManager
                 maxZ = position.z;
         }
 
-        int width = (int)MathF.Abs(minX - maxX) + 2;// TODO: Might use 1
-        int height = (int)MathF.Abs(minY - maxY) + 2;
-        int length = (int)MathF.Abs(minZ - maxZ) + 2;
+        int width = (int)MathF.Abs(minX - maxX) + 1;// TODO: Might use 1
+        int height = (int)MathF.Abs(minY - maxY) + 1;
+        int length = (int)MathF.Abs(minZ - maxZ) + 1;
 
-        List<int> densities = new List<int>();
+        float[] densities = new float[(width * height * length) * 512];
         List<Chunk> usedChunks = new List<Chunk>();
         List<int> usedPositions = new List<int>();
 
@@ -188,13 +188,10 @@ public class ChunkManager
                     simpleZ += 1;
 
                     int start = (simpleX + width * (simpleY + height * simpleZ)) * 512;
-                    int end = (simpleX + width * (simpleY + height * simpleZ) + 1) * 512;
                     Chunk chunk = chunks[x, y, z];
 
-                    for(int i = start; i < end; i++){
-                        //densities[i] = this.chunks[x, y, z].voxels[i].density;
-                        Debug.Log(i);
-                        Debug.Log(chunk.voxels[i].density);
+                    for(int i = 0; i < 512; i++){
+                        densities[i + start] = chunk.voxels[i].density;
                     }
 
                     inputPositionsSimple.Add(new Vector3Int(x, y, z));
@@ -208,8 +205,6 @@ public class ChunkManager
                 }
             }
         }
-
-        Debug.Log(densities.Count + " " + width * height * length);
 
         //renderer.generate();
 
