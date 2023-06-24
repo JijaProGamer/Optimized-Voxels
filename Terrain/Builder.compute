@@ -38,8 +38,8 @@ void D2Build (uint3 id: SV_GroupThreadID, uint3 group_id: SV_GroupID)
 
     float noise = ((fnlGetNoise2D(noiseState, x, z) + 1) / 2) * amplitude;
 
-    //Result2D[idToIndex2D(id, group_id.x)] = id.x + id.z;
-    Result2D[idToIndex2D(id, group_id.x)] = noise;
+    Result2D[idToIndex2D(id, group_id.x)] = x + z;
+    //Result2D[idToIndex2D(id, group_id.x)] = noise;
 }
 
 [numthreads(8,8,8)]

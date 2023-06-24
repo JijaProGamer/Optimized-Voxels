@@ -7,8 +7,12 @@ struct Triangle {
 };
 
 StructuredBuffer<int3> positions;
+StructuredBuffer<int> positionsUsed;
 StructuredBuffer<float> Densities;
 AppendStructuredBuffer<Triangle> Result;
+
+int width;
+int height;
 
 float3 interp(float3 edgeVertex1, float valueAtVertex1, float3 edgeVertex2, float valueAtVertex2)
 {
@@ -20,8 +24,42 @@ uint idToIndex(uint3 id, uint group_id){
 }
 
 float getDensity(int x, int y, int z, uint group_id){
-    int3 group = positions[group_id];
-    return Densities[group_id * 512 + (x + 8 * (y + 8 * z))]; // Rewrite to support neighbors
+    int3 group = positions[positionsUsed[group_id]];
+
+    if(x < 0){
+        x = 7;
+        group.x -= 1;
+    }
+
+    if(x > 7){
+        x = 0;
+        group.x += 1;
+    }
+
+    if(y < 0){
+        y = 7;
+        group.y -= 1;
+    }
+
+    if(y > 7){
+        y = 0;
+        group.y += 1;
+    }
+
+    if(z < 0){
+        z = 7;
+        group.z -= 1;
+    }
+
+    if(z > 7){
+        z = 0;
+        group.z += 1;
+    }
+
+    uint groupPosition = (group.x + width * (group.y + height * group.z));
+    uint blockPosition = x + 8 * (y + 8 * z);
+
+    return Densities[groupPosition * 512 + blockPosition];
 }
 
 [numthreads(8,8,8)]

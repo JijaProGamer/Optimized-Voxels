@@ -37,15 +37,34 @@ public class ChunkManager
     {
         if (generatingChunks && terrainGenerator.finished)
         {
+            generatingChunks = true;
             finishedGeneratingChunks = true;
         }
 
         if (renderingChunks && renderer.finished)
         {
+            renderingChunks = false;
+            for (int i = 0; i < renderer.chunksToTransform.Count; i++)
+            {
+                Chunk chunk = renderer.chunksToTransform[i];
+                if(chunk.mesh.vertices.Count > 0){
+                    if(chunk.bareMesh == null){
+                        meshPool.GetMesh(chunk, false);
+                    } else {
+                        chunk.mesh.SetData();
+                    }
+                }
+
+                if(chunk.bareMesh != null && chunk.mesh.vertices.Count == 0){
+                    meshPool.AddMesh(chunk.bareMesh);
+                    chunk.bareMesh = null;
+                }
+            }
+
             finishedRenderingChunks = true;
         }
 
-        meshPool.threading.Update();
+        meshPool.Update();
         renderer.Update();
         terrainGenerator.Update();
     }
@@ -159,7 +178,7 @@ public class ChunkManager
                 maxZ = position.z;
         }
 
-        int width = (int)MathF.Abs(minX - maxX) + 1;// TODO: Might use 1
+        int width = (int)MathF.Abs(minX - maxX) + 1; // TODO: Might use 1
         int height = (int)MathF.Abs(minY - maxY) + 1;
         int length = (int)MathF.Abs(minZ - maxZ) + 1;
 
@@ -167,13 +186,11 @@ public class ChunkManager
         List<Chunk> usedChunks = new List<Chunk>();
         List<int> usedPositions = new List<int>();
 
-        //List<Vector2Int> inputPositionsBiomes = new List<Vector2Int>();
-        List<Vector3Int> inputPositionsSimple = new List<Vector3Int>();
-       // List<Vector2Int> inputPositions = new List<Vector2Int>();
+        Vector3Int[] inputPositionsSimple = new Vector3Int[width * height * length];
 
-       int simpleX = -1;
-       int simpleY = -1;
-       int simpleZ = -1;
+        int simpleX = -1;
+        int simpleY = -1;
+        int simpleZ = -1;
 
         for (int x = minX; x <= maxX; x++)
         {
@@ -187,26 +204,28 @@ public class ChunkManager
                 {
                     simpleZ += 1;
 
-                    int start = (simpleX + width * (simpleY + height * simpleZ)) * 512;
+                    int index = simpleX + width * (simpleY + height * simpleZ);
+                    int start = index * 512;
                     Chunk chunk = chunks[x, y, z];
 
-                    for(int i = 0; i < 512; i++){
+                    for (int i = 0; i < 512; i++)
+                    {
                         densities[i + start] = chunk.voxels[i].density;
                     }
 
-                    inputPositionsSimple.Add(new Vector3Int(x, y, z));
+                    inputPositionsSimple[index] = new Vector3Int(simpleX, simpleY, simpleZ);
                     int inputPositionIndex = positions.IndexOf(new Vector3Int(x, y, z));
 
                     if (inputPositionIndex >= 0)
                     {
                         usedChunks.Add(chunk);
-                        usedPositions.Add(inputPositionIndex);
+                        usedPositions.Add(index);
                     }
                 }
             }
         }
 
-        //renderer.generate();
+        renderer.generate(densities, width, height, usedChunks, inputPositionsSimple, usedPositions);
 
         renderingChunks = true;
     }

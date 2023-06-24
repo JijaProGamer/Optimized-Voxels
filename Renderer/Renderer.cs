@@ -17,7 +17,7 @@ public class Renderer
     public int threads;
     public ComputeShader shader;
 
-    List<Chunk> chunksToTransform;
+    public List<Chunk> chunksToTransform;
     Triangle[] result;
 
     CustomThreading threading = new CustomThreading();
@@ -70,30 +70,41 @@ public class Renderer
         threading.Update();
     }
 
-    public void generate(float[] densities, List<Chunk> chunks, List<Vector3Int> positions)
+    public void generate(float[] densities, int width, int height, List<Chunk> chunks, Vector3Int[] positions, List<int> usedPositions)
     {
-        Debug.Log("OK"); 
+        for(int i = 0; i < chunks.Count; i++){
+            chunks[i].mesh.Reset();
+        }
+
         outputBuffer = new ComputeBuffer(
-            positions.Count * 512 * 5,
+            usedPositions.Count * 512 * 5,
             sizeof(float) * 9 + sizeof(int),
             ComputeBufferType.Append
         );
 
         countBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
-        ComputeBuffer positionBuffer = new ComputeBuffer(positions.Count, sizeof(int) * 3);
-        ComputeBuffer densitiesBuffer = new ComputeBuffer(positions.Count * 512, sizeof(float));
+        ComputeBuffer positionBuffer = new ComputeBuffer(positions.Length, sizeof(int) * 3);
+        ComputeBuffer positionUsedBuffer = new ComputeBuffer(usedPositions.Count, sizeof(int));
+        ComputeBuffer densitiesBuffer = new ComputeBuffer(densities.Length, sizeof(float));
+        positionUsedBuffer.SetData(usedPositions);
         positionBuffer.SetData(positions);
         densitiesBuffer.SetData(densities);
         started = true;
         chunksToTransform = chunks;
 
+        shader.SetInt("width", width);
+        shader.SetInt("height", height);
+
         shader.SetBuffer(0, "positions", positionBuffer);
+        shader.SetBuffer(0, "positionsUsed", positionUsedBuffer);
         shader.SetBuffer(0, "Densities", densitiesBuffer);
         shader.SetBuffer(0, "Result", outputBuffer);
 
-        shader.Dispatch(0, positions.Count, 1, 1);
+        shader.Dispatch(0, usedPositions.Count, 1, 1);
+        
         request = AsyncGPUReadback.Request(outputBuffer);
         positionBuffer.Release();
+        positionUsedBuffer.Release();
         densitiesBuffer.Release();
     }
 };

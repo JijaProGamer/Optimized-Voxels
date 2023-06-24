@@ -13,8 +13,8 @@ public class Tester : MonoBehaviour
     public ComputeShader renderingShader;
 
     int threads;
-    int render_distance = 6;
-    int render_height = 20;
+    int render_distance = 4;
+    int render_height = 40;
     int map_height = 5;
 
     List<Vector2Int> toGenerate = new List<Vector2Int>();
@@ -76,9 +76,11 @@ public class Tester : MonoBehaviour
         {
             for (int z = -render_distance + playerPosition.z; z <= render_distance + playerPosition.z; z++)
             {
-                for (int y = 0; y < map_height; y++)
+                for (int y = playerPosition.y - (render_height / 2); y < playerPosition.y + (render_height / 2); y++)
                 {
-                    toRender.Add(new Vector3Int(x, y, z));
+                    if(y < map_height && y >= 0){
+                        toRender.Add(new Vector3Int(x, y, z));
+                    }
                 }
 
                 toGenerate.Add(new Vector2Int(x, z));
@@ -87,13 +89,14 @@ public class Tester : MonoBehaviour
 
         chunkManager.meshPool.Init();
         //chunkManager.meshPool.GenerateMeshes((int)(10f / 100f * (float)toGenerate.Count));
+        chunkManager.meshPool.needing = (int)(10f / 100f * (float)toGenerate.Count);
 
         StartCoroutine(startRunning());
     }
 
     void MakeMesh(int i)
     {
-        ChunkMesh chunkMesh = new ChunkMesh();
+        BareMesh chunkMesh = new BareMesh();
         Mesh mesh = new Mesh();
 
         GameObject chunk = new GameObject("Chunk");

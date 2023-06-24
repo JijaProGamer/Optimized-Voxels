@@ -109,7 +109,7 @@ public class TerrainGenerator
         ChunkSlice chunkSlice = new ChunkSlice();
         chunkSlice.position = basePosition;
 
-        Debug.Log(basePosition);
+        //Debug.Log(basePosition); // Make biomes
 
         parent.chunkSlices[basePosition.x, basePosition.y] = chunkSlice;
     }

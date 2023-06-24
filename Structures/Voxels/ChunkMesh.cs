@@ -5,7 +5,6 @@ using UnityEngine;
 
 public class ChunkMesh {
     public Mesh mesh;
-    public GameObject chunkObject;
     public List<Color32> colors = new List<Color32>();
     public List<Vector3> vertices = new List<Vector3>();
     public List<Vector3> normals = new List<Vector3>();
