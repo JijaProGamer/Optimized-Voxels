@@ -39,9 +39,9 @@ public class Renderer
         chunk.mesh.vertices.Add(tri.b);
         chunk.mesh.vertices.Add(tri.c);
 
-        chunk.mesh.vertices.Add(tri.normal_a);
-        chunk.mesh.vertices.Add(tri.normal_b);
-        chunk.mesh.vertices.Add(tri.normal_c);
+        chunk.mesh.normals.Add(tri.normal_a);
+        chunk.mesh.normals.Add(tri.normal_b);
+        chunk.mesh.normals.Add(tri.normal_c);
 
         chunk.mesh.triangles.Add(chunk.mesh.vertices.Count - 3);
         chunk.mesh.triangles.Add(chunk.mesh.vertices.Count - 2);

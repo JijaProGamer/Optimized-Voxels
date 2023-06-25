@@ -110,9 +110,12 @@ void March (uint3 id: SV_GroupThreadID, uint3 group_id: SV_GroupID)
         tri.b = interp(cornerOffsets[e10], cubeValues[e10], cornerOffsets[e11], cubeValues[e11]) + id;
         tri.c = interp(cornerOffsets[e20], cubeValues[e20], cornerOffsets[e21], cubeValues[e21]) + id;
 
-        tri.normal_a = normalize(cross(tri.b - tri.a, tri.c - tri.a));
-        tri.normal_b = normalize(cross(tri.b - tri.a, tri.c - tri.a));
-        tri.normal_c = normalize(cross(tri.b - tri.a, tri.c - tri.a));
+        //int3 normal = normalize(cross(tri.b - tri.a, tri.c - tri.a));
+        int3 susuno = int3(0,0,0);
+
+        tri.normal_a = susuno;
+        tri.normal_b = susuno;
+        tri.normal_c = susuno;
 
         tri.chunk = group_id.x;
 
