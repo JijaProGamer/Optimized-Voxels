@@ -3,6 +3,7 @@
 
 struct Triangle {
     float3 a, b, c;
+    float3 normal_a, normal_b, normal_c;
     int chunk;
 };
 
@@ -104,9 +105,15 @@ void March (uint3 id: SV_GroupThreadID, uint3 group_id: SV_GroupID)
         int e21 = edgeConnections[edges[i + 2]][1];
 
         Triangle tri;
+
         tri.a = interp(cornerOffsets[e00], cubeValues[e00], cornerOffsets[e01], cubeValues[e01]) + id;
         tri.b = interp(cornerOffsets[e10], cubeValues[e10], cornerOffsets[e11], cubeValues[e11]) + id;
         tri.c = interp(cornerOffsets[e20], cubeValues[e20], cornerOffsets[e21], cubeValues[e21]) + id;
+
+        tri.normal_a = normalize(cross(tri.b - tri.a, tri.c - tri.a));
+        tri.normal_b = normalize(cross(tri.b - tri.a, tri.c - tri.a));
+        tri.normal_c = normalize(cross(tri.b - tri.a, tri.c - tri.a));
+
         tri.chunk = group_id.x;
 
         Result.Append(tri);

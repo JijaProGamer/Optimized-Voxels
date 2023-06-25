@@ -38,7 +38,7 @@ public class Tester : MonoBehaviour
 
         // terrain config
 
-        terrainSettings.terrain_amplitude = 15;
+        terrainSettings.terrain_amplitude = 30;
         terrainSettings.terrain_frequency = 100;
         terrainSettings.terrain_warp_octaves = 4;
         terrainSettings.terrain_floor = 50;

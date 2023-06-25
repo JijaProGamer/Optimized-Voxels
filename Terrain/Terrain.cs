@@ -60,7 +60,7 @@ public class TerrainGenerator
 
         for (int subchunkIndex = 0; subchunkIndex < map_height; subchunkIndex++)
         {
-            int index3D =  i * map_height + subchunkIndex;
+            int index3D = i * map_height + subchunkIndex;
 
             Chunk subchunk = new Chunk();
             subchunk.position = new Vector3Int(basePosition.x, subchunkIndex, basePosition.y);
@@ -69,8 +69,10 @@ public class TerrainGenerator
             {
                 for (int z = 0; z < 8; z++)
                 {
-                    float height = result2D[baseIndex + (x + 8 * z)] + terrainSettings.terrain_floor;
-                    
+                    float height =
+                        result2D[baseIndex + (x + 8 * z)] + terrainSettings.terrain_floor;
+                    float max_height = height + 8;
+
                     for (int y = 0; y < 8; y++)
                     {
                         int real_y = y + subchunkIndex * 8;
@@ -85,13 +87,14 @@ public class TerrainGenerator
                             0
                         );
 
-                        if (real_y <= height)
+                        if (real_y < height)
                         {
                             voxel.density = value.density;
                         }
                         else
                         {
-                            voxel.density = 0;
+                            float normalizedY = (real_y - height) / (max_height - height);
+                            voxel.density = Mathf.Lerp(value.density, 0, normalizedY);
                         }
 
                         subchunk.voxels[x, y, z] = voxel;
@@ -105,7 +108,7 @@ public class TerrainGenerator
 
     void generateSlice(int i)
     {
-       Vector2Int basePosition = inputPositionsBiomes[i];
+        Vector2Int basePosition = inputPositionsBiomes[i];
 
         ChunkSlice chunkSlice = new ChunkSlice();
         chunkSlice.position = basePosition;
@@ -116,7 +119,7 @@ public class TerrainGenerator
     }
 
     public void Update()
-    {        
+    {
         if (finished_biomes && !started2D)
         {
             started2D = true;
