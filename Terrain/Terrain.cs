@@ -143,12 +143,12 @@ public class TerrainGenerator
 
             Debug.Log("Start 3D");
 
-            threading.finished = () =>
+            /*threading.finished = () =>
             {
                 finished = true;
             };
             threading.func = transformChunk;
-            threading.SetData(threads, 25, usedPositions.Count);
+            threading.SetData(threads, 25, usedPositions.Count);*/
         }
 
         threading.Update();
@@ -183,7 +183,7 @@ public class TerrainGenerator
             finished_biomes = true;
         };
         threading.func = generateSlice;
-        threading.SetData(threads, 100, _inputPositionsBiomes.Count);
+        threading.SetData(threads, 50, _inputPositionsBiomes.Count);
 
         inputPositions = _inputPositions;
         usedPositions = _usedPositions;

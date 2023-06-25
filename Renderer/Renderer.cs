@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 struct Triangle
 {
     public Vector3 a, b, c;
-    public Vector3 normal_a, normal_b, normal_c;
+    //public Vector3 normal_a, normal_b, normal_c;
 
     public int chunk;
 }
@@ -39,9 +39,9 @@ public class Renderer
         chunk.mesh.vertices.Add(tri.b);
         chunk.mesh.vertices.Add(tri.c);
 
-        chunk.mesh.normals.Add(tri.normal_a);
+        /*chunk.mesh.normals.Add(tri.normal_a);
         chunk.mesh.normals.Add(tri.normal_b);
-        chunk.mesh.normals.Add(tri.normal_c);
+        chunk.mesh.normals.Add(tri.normal_c);*/
 
         chunk.mesh.triangles.Add(chunk.mesh.vertices.Count - 3);
         chunk.mesh.triangles.Add(chunk.mesh.vertices.Count - 2);
@@ -82,7 +82,7 @@ public class Renderer
 
         outputBuffer = new ComputeBuffer(
             usedPositions.Count * 512 * 5,
-            sizeof(float) * 9 + sizeof(float) * 9 + sizeof(int),
+            sizeof(float) * 9 /*+ sizeof(float) * 9*/ + sizeof(int),
             ComputeBufferType.Append
         );
 

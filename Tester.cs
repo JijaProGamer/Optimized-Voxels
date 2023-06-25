@@ -13,9 +13,9 @@ public class Tester : MonoBehaviour
     public ComputeShader renderingShader;
 
     int threads;
-    int render_distance = 16;
+    int render_distance = 32;
     int render_height = 40;
-    int map_height = 10;
+    int map_height = 40;
 
     List<Vector2Int> toGenerate = new List<Vector2Int>();
     List<Vector3Int> toRender = new List<Vector3Int>();
@@ -117,8 +117,8 @@ public class Tester : MonoBehaviour
 
     IEnumerator startRunning()
     {
-        //yield return new WaitForSeconds(3f);
-        yield return new WaitForSeconds(0);
+        yield return new WaitForSeconds(3f);
+        //yield return new WaitForSeconds(0);
         Debug.Log("Started");
 
         chunkManager.Start();
@@ -140,7 +140,7 @@ public class Tester : MonoBehaviour
             startedRendering = true;
 
             Debug.Log("Started rendering");
-            chunkManager.RenderChunks(toRender);
+            //chunkManager.RenderChunks(toRender);
         }
 
         if (chunkManager.finishedRenderingChunks && !finishedRendering)
