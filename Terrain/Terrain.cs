@@ -55,10 +55,13 @@ public class TerrainGenerator
     void transformChunk(int i)
     {
         Vector2Int basePosition = inputPositions[usedPositions[i]];
+        Vector2Int basePositionSimple = inputPositionsSimple[usedPositions[i]];
         int baseIndex = i * 64;
 
         for (int subchunkIndex = 0; subchunkIndex < map_height; subchunkIndex++)
         {
+            int index3D =  i * map_height + subchunkIndex;
+
             Chunk subchunk = new Chunk();
             subchunk.position = new Vector3Int(basePosition.x, subchunkIndex, basePosition.y);
 
@@ -66,14 +69,13 @@ public class TerrainGenerator
             {
                 for (int z = 0; z < 8; z++)
                 {
-                    float height = result2D[baseIndex + (x + 8 * z)];
+                    float height = result2D[baseIndex + (x + 8 * z)] + terrainSettings.terrain_floor;
                     
                     for (int y = 0; y < 8; y++)
                     {
                         int real_y = y + subchunkIndex * 8;
-                        int index3D = (x + width_used * (real_y + map_height * z));
 
-                        voxelResult value = result3D[index3D + (x + 8 * (y + 8 * z))];
+                        voxelResult value = result3D[index3D * 512 + (x + 8 * (y + 8 * z))];
                         Voxel voxel = new Voxel();
 
                         voxel.color = new Color32(
@@ -83,10 +85,9 @@ public class TerrainGenerator
                             0
                         );
 
-                        if (real_y < height)
+                        if (real_y <= height)
                         {
-                            voxel.density = 0.8f;
-                            //voxel.density = value.density;
+                            voxel.density = value.density;
                         }
                         else
                         {
@@ -158,9 +159,9 @@ public class TerrainGenerator
         int width
     )
     {
-        output2DBuffer = new ComputeBuffer(_inputPositions.Count * 64, sizeof(float));
+        output2DBuffer = new ComputeBuffer(_usedPositions.Count * 64, sizeof(float));
         output3DBuffer = new ComputeBuffer(
-            _inputPositions.Count * map_height * 512,
+            _usedPositions.Count * map_height * 512,
             sizeof(float) + sizeof(int) * 3
         );
 
@@ -197,7 +198,12 @@ public class TerrainGenerator
         shader.SetInt("amplitude", terrainSettings.terrain_amplitude);
         shader.SetInt("seed", terrainSettings.terrain_seed);
 
+        shader.SetInt("width", width_used);
+        shader.SetInt("height", map_height);
+
         shader.SetBuffer(0, "positions", positionBuffer);
+        shader.SetBuffer(0, "positionsUsed", positionUsedBuffer);
+        shader.SetBuffer(0, "positionsSimple", positionSimpleBuffer);
         shader.SetBuffer(0, "Result2D", output2DBuffer);
 
         shader.Dispatch(0, usedPositions.Count, 1, 1);
@@ -212,7 +218,13 @@ public class TerrainGenerator
         shader.SetInt("octaves", terrainSettings.cave_octaves);
         shader.SetInt("seed", terrainSettings.cave_seed);
 
+        shader.SetInt("width", width_used);
+        shader.SetInt("height", map_height);
+        //shader.SetInt("height", le);
+
         shader.SetBuffer(1, "positions", positionBuffer);
+        shader.SetBuffer(1, "positionsUsed", positionUsedBuffer);
+        shader.SetBuffer(1, "positionsSimple", positionSimpleBuffer);
         shader.SetBuffer(1, "Result3D", output3DBuffer);
 
         shader.Dispatch(1, usedPositions.Count, map_height, 1);

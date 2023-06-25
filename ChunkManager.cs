@@ -95,8 +95,8 @@ public class ChunkManager
                 maxZ = position.y;
         }
 
-        int width = (int)MathF.Abs(minX - maxX) + 2; // TODO: Might use 1
-        int length = (int)MathF.Abs(minZ - maxZ) + 2;
+        int width = (int)MathF.Abs(minX - maxX) + 1;
+        int length = (int)MathF.Abs(minZ - maxZ) + 1;
 
         List<Vector2Int> inputPositionsBiomes = new List<Vector2Int>();
         List<Vector2Int> inputPositionsSimple = new List<Vector2Int>();
@@ -225,7 +225,7 @@ public class ChunkManager
             }
         }
 
-        renderer.generate(densities, width, height, usedChunks, inputPositionsSimple, usedPositions);
+        renderer.generate(densities, width, height, length, usedChunks, inputPositionsSimple, usedPositions);
 
         renderingChunks = true;
     }

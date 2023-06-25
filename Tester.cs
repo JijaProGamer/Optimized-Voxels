@@ -13,9 +13,9 @@ public class Tester : MonoBehaviour
     public ComputeShader renderingShader;
 
     int threads;
-    int render_distance = 4;
+    int render_distance = 16;
     int render_height = 40;
-    int map_height = 5;
+    int map_height = 10;
 
     List<Vector2Int> toGenerate = new List<Vector2Int>();
     List<Vector3Int> toRender = new List<Vector3Int>();
@@ -41,6 +41,7 @@ public class Tester : MonoBehaviour
         terrainSettings.terrain_amplitude = 15;
         terrainSettings.terrain_frequency = 100;
         terrainSettings.terrain_warp_octaves = 4;
+        terrainSettings.terrain_floor = 50;
 
         terrainSettings.biome_frequency = 100;
 
@@ -89,7 +90,7 @@ public class Tester : MonoBehaviour
 
         chunkManager.meshPool.Init();
         //chunkManager.meshPool.GenerateMeshes((int)(10f / 100f * (float)toGenerate.Count));
-        chunkManager.meshPool.needing = (int)(10f / 100f * (float)toGenerate.Count);
+        //chunkManager.meshPool.needing = (int)(10f / 100f * (float)toGenerate.Count);
 
         StartCoroutine(startRunning());
     }

@@ -70,7 +70,7 @@ public class Renderer
         threading.Update();
     }
 
-    public void generate(float[] densities, int width, int height, List<Chunk> chunks, Vector3Int[] positions, List<int> usedPositions)
+    public void generate(float[] densities, int width, int height, int length, List<Chunk> chunks, Vector3Int[] positions, List<int> usedPositions)
     {
         for(int i = 0; i < chunks.Count; i++){
             chunks[i].mesh.Reset();
@@ -94,6 +94,7 @@ public class Renderer
 
         shader.SetInt("width", width);
         shader.SetInt("height", height);
+        shader.SetInt("length", length);
 
         shader.SetBuffer(0, "positions", positionBuffer);
         shader.SetBuffer(0, "positionsUsed", positionUsedBuffer);
@@ -101,7 +102,7 @@ public class Renderer
         shader.SetBuffer(0, "Result", outputBuffer);
 
         shader.Dispatch(0, usedPositions.Count, 1, 1);
-        
+
         request = AsyncGPUReadback.Request(outputBuffer);
         positionBuffer.Release();
         positionUsedBuffer.Release();

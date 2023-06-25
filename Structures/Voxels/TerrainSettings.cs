@@ -3,6 +3,7 @@ public class TerrainSettings {
     public int terrain_amplitude;
     public int terrain_octaves;
     public int terrain_warp_octaves;
+    public int terrain_floor;
 
     public float biome_frequency;
 

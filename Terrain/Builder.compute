@@ -7,7 +7,14 @@ struct voxelResult {
     int color_r, color_g, color_b;
 };
 
-StructuredBuffer<int3> positions;
+StructuredBuffer<int2> positions;
+StructuredBuffer<int2> positionsSimple;
+StructuredBuffer<int> positionsUsed;
+StructuredBuffer<int2> biomes;
+
+int width;
+int height;
+int length;
 
 RWStructuredBuffer<float> Result2D;
 RWStructuredBuffer<voxelResult> Result3D;
@@ -21,34 +28,37 @@ uint idToIndex2D(uint3 id, uint group_id){
     return group_id * 64 + (id.x + 8 * id.z);
 }
 
-uint idToIndex3D(uint3 id, uint group_id){
-    return group_id * 512 + (id.x + 8 * (id.y + 8 * id.z));
+uint idToIndex3D(uint3 id, uint group_id, uint group_id_y){
+    uint chunkId = group_id * height + group_id_y;
+    uint blockId = id.x + 8 * (id.y + 8 * id.z);
+
+    return chunkId * 512 + blockId;
 }
 
 [numthreads(8,1,8)]
-void D2Build (uint3 id: SV_GroupThreadID, uint3 group_id: SV_GroupID)
+void D2Build (uint3 id: SV_GroupThreadID, uint3 group_id: SV_GroupID, uint3 iid: SV_DispatchThreadID )
 {
-    int3 Chunk = positions[group_id.x];
+    int2 Chunk = positions[positionsUsed[group_id.x]];
     int x = Chunk.x * 8 + id.x;
-    int z = Chunk.z * 8 + id.z;
+    int z = Chunk.y * 8 + id.z;
 
     fnl_state noiseState = fnlCreateState();
-    noiseState.noise_type = FNL_NOISE_OPENSIMPLEX2;
+    noiseState.noise_type = FNL_NOISE_OPENSIMPLEX2S;
     noiseState.seed = seed;
 
     float noise = ((fnlGetNoise2D(noiseState, x, z) + 1) / 2) * amplitude;
 
-    Result2D[idToIndex2D(id, group_id.x)] = x + z;
-    //Result2D[idToIndex2D(id, group_id.x)] = noise;
+    //Result2D[idToIndex2D(id, group_id.x)] = x + z;
+    Result2D[idToIndex2D(id, group_id.x)] = noise;
 }
 
 [numthreads(8,8,8)]
-void D3Build (uint3 id: SV_GroupThreadID, uint3 group_id: SV_GroupID)
+void D3Build (uint3 id: SV_GroupThreadID, uint3 group_id: SV_GroupID, uint3 iid: SV_DispatchThreadID)
 {
-    int3 Chunk = positions[group_id.x];
+    int2 Chunk = positions[positionsUsed[group_id.x]];
     int x = Chunk.x * 8 + id.x;
-    int y = Chunk.y * 8 + id.y;
-    int z = Chunk.z * 8 + id.z;
+    int y = iid.y;
+    int z = Chunk.y * 8 + id.z;
 
     voxelResult result;
 
@@ -57,10 +67,14 @@ void D3Build (uint3 id: SV_GroupThreadID, uint3 group_id: SV_GroupID)
     result.color_b = 99;
 
     fnl_state noiseState = fnlCreateState();
-    noiseState.noise_type = FNL_NOISE_OPENSIMPLEX2;
+    noiseState.noise_type = FNL_NOISE_OPENSIMPLEX2S;
     noiseState.seed = seed;
+    noiseState.frequency = 0.05;
 
     result.density = (fnlGetNoise3D(noiseState, x, y, z) + 1) / 2;
+    //result.density = ((float) (x + y + z)) / 48 + 0.5;
+    //result.density = ((float) (x)) / 80;
+    //result.density = 1.5;
 
-    Result3D[idToIndex3D(id, group_id.x)] = result;
+    Result3D[idToIndex3D(id, group_id.x, group_id.y)] = result;
 }

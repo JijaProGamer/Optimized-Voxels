@@ -13,6 +13,7 @@ AppendStructuredBuffer<Triangle> Result;
 
 int width;
 int height;
+int length;
 
 float3 interp(float3 edgeVertex1, float valueAtVertex1, float3 edgeVertex2, float valueAtVertex2)
 {
@@ -54,6 +55,10 @@ float getDensity(int x, int y, int z, uint group_id){
     if(z > 7){
         z = 0;
         group.z += 1;
+    }
+
+    if(group.y >= height || group.x >= width || group.z >= length){
+        return 0;
     }
 
     uint groupPosition = (group.x + width * (group.y + height * group.z));

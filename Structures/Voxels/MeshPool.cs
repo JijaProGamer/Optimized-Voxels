@@ -69,7 +69,7 @@ public class MeshPool
         if (needing > 0 && !generatingMeshes)
         {
             generatingMeshes = true;
-            threading.SetData(2, 3, needing);
+            threading.SetData(5, 5, needing);
             needing = 0;
         }
 

@@ -22,6 +22,9 @@ public class CustomThreading
     private int batches;
     private int extraWork;
 
+    bool newError;
+    string lastError;
+
     public void SetData(int threads, int workPerThread, int workAmount)
     {
         session++;
@@ -48,14 +51,19 @@ public class CustomThreading
 
         for (int j = start; j < end; j++)
         {
-            func(j);
-            int currentWorkFinished = Interlocked.Increment(ref workFinished);
+            try {
+                func(j);
+                int currentWorkFinished = Interlocked.Increment(ref workFinished);
 
-            if (currentWorkFinished >= workAmount)
-            {
-                isWorking = false;
-                finishedWorking = true;
-                finished?.Invoke();
+                if (currentWorkFinished >= workAmount)
+                {
+                    isWorking = false;
+                    finishedWorking = true;
+                    finished?.Invoke();
+                }
+            } catch (Exception err){
+                lastError = err.ToString();
+                newError = true;
             }
         }
 
@@ -64,8 +72,20 @@ public class CustomThreading
 
     public void Update()
     {
+        if(newError){
+            Debug.Log(lastError);
+            newError = false;
+        }
+
         if (isWorking && !finishedWorking && threadsUsed < threads)
         {
+            if (workAmount == 0)
+            {
+                isWorking = false;
+                finishedWorking = true;
+                finished?.Invoke();
+            }
+
             int availableThreads = threads - threadsUsed;
 
             for (int i = 0; i < availableThreads; i++)
